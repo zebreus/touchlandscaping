@@ -14,6 +14,21 @@ float table_size = 760;
 float scale_factor = 1;
 PFont font;
 
+boolean doFullRefresh = false; // Drawing every pixel on every frame is very slow, TODO: check if going through the full array is slow or drawing, as then there could be some way to only draw the delta from the last frame or scaled resolution or something
+boolean doDebugOverlay = false; // Looks very strange without full refresh
+
+/*
+Potential lag solution:
+
+- Creating the PGraphics object at global scope: PGraphics pg;
+- Setting it up in setup(): pg = createGraphics( width, height );
+- pg.beginDraw(); in draw()
+- moving draw functions to use it. i.e: ellipse(...) -> pg.ellipse(...)
+- pg.endDraw(); in draw()
+- Using it: image( pg.get(0,0,width,height), 0,0); 
+
+*/
+
 public abstract class Gesture {
   public static final float NO_MATCH = 0.0f;
   public static final float UNLIKELY = 0.25f;
@@ -51,6 +66,9 @@ public class ToolGesture extends Gesture {
   }
 
   public boolean update() {
+    
+    mapManager.useTool(cursors.get(0).getPosition()); //<>//
+    
     if (cursors.get(0).getTuioState() != TuioCursor.TUIO_REMOVED) {
       return true;
     } else {
@@ -86,14 +104,14 @@ public class PinchGesture extends Gesture {
   float initialAngle;
   boolean initialized = false;
 
-  float angleThreshold = 30;
+  float angleThreshold = 30.0;
   float distanceThreshold = 0.1;
 
   public PinchGesture(ArrayList<TuioCursor> cursors) {
     super(cursors);
   }
 
-  boolean menu = false;
+  int menu = -1;
 
   public boolean update() {
 
@@ -121,8 +139,10 @@ public class PinchGesture extends Gesture {
       } else {
         float currentAngle = cursors.get(0).getAngleDegrees(cursors.get(1));
         float currentDistance = cursors.get(0).getDistance(cursors.get(1));
-        if (abs(currentAngle)-abs(initialAngle) < 30.0f) {
-          if (abs(abs(currentDistance)-abs(initialDistance)) > distanceThreshold) {
+        if (abs(abs(currentAngle)-abs(initialAngle)) < angleThreshold) {
+          float travelledDistance = abs(currentDistance) - abs(initialDistance);
+          if (abs(travelledDistance) > distanceThreshold && travelledDistance < 0) { // Making sure minimum distance travelled towards each other is met
+            // TODO: Add min and max time
             return Gesture.MATCH;
           } else {
             return Gesture.UNCLEAR;
@@ -140,19 +160,19 @@ public class PinchGesture extends Gesture {
   int menueY;
 
   public void updateMenu() {
-    if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED || cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
-      menu = true;
-    }
-
-    // Start menueing
-    if (menu) {
-      //println("Opening menue");
-      TuioCursor menueCursor = cursors.get(0);
+    if (menu < 0) {
       if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED) {
-        menueCursor = cursors.get(1);
+        menu = 1;
+      } else if (cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
+        menu = 0;
       }
+    
+    // Start menueing
+    } else {
+      //println("Opening menue");
+      TuioCursor menueCursor = cursors.get(menu);
 
-      if (!menuePosSet) {
+      if (!menuePosSet) { //<>//
         menuePos = menueCursor.getPosition();
         menueX = menueCursor.getScreenX(width);
         menueY = menueCursor.getScreenY(height);
@@ -160,16 +180,117 @@ public class PinchGesture extends Gesture {
       }
 
       // TODO: show actual menue
-      stroke(0, 255, 0);
-      line(menueX - 300, menueY, menueX + 300, menueY);
-      line(menueX, menueY - 300, menueX, menueY + 300);
+      if (doDebugOverlay) {
+        stroke(0, 255, 0);
+        line(menueX - 300, menueY, menueX + 300, menueY);
+        line(menueX, menueY - 300, menueX, menueY + 300);  
+      }
       if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED && cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
         float menueChoosenAngle = menuePos.getAngleDegrees(menueCursor.getPosition());
-        println("Closing menue: " + menueChoosenAngle);
+        if (menueChoosenAngle > 0 && menueChoosenAngle < 90) {mapManager.changeTool(Tool.RAISE_TERRAIN);}
+        else if (menueChoosenAngle < 180) {mapManager.changeTool(Tool.LOWER_TERRAIN);}
+        else if (menueChoosenAngle < 270) {mapManager.changeTool(Tool.BLUR_TERRAIN);}
+        else {}
+        println("Closing menue: " + menueChoosenAngle + " and changed Tool to: " + mapManager.tool.toString());
       }
     }
   }
 }
+
+public class ScrollGesture extends Gesture {
+  //The new point has to be older than minimumTime and younger than maximum time
+  TuioTime minAge = new TuioTime(100);
+  TuioTime maxAge = new TuioTime(1000);
+  float initialDistance;
+  TuioPoint initialDirtyPos;
+  TuioPoint initialPos;
+  boolean initialized = false;
+
+  float angleThreshold = 20; // Eg. 80°-100° = brushSize up 
+  float distanceDeviationThreshold = 0.05;
+  float distanceThreshold = 0.05;
+  
+  int stepMod = 300;  // TODO: Somehow rework the step system to be nicer
+  
+  public ScrollGesture(ArrayList<TuioCursor> cursors) {
+    super(cursors);
+  }
+
+  public boolean update() {
+
+    updateScrollActions();
+ //<>//
+    if (cursors.get(0).getTuioState() != TuioCursor.TUIO_REMOVED && cursors.get(1).getTuioState() != TuioCursor.TUIO_REMOVED) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  public float evaluatePotential() {
+    if (cursors.size() != 2) {
+      return Gesture.NO_MATCH;
+    } else {
+      if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED || cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
+        return Gesture.NO_MATCH;
+      }
+      if (!initialized) {
+        initialDistance = cursors.get(0).getDistance(cursors.get(1));
+        initialDirtyPos = cursors.get(0).getPosition();
+        initialPos = calcPosBetween(initialDirtyPos, cursors.get(1).getPosition());
+        initialized = true;
+        return Gesture.UNCLEAR;
+      } else {
+        float currentDistance = cursors.get(0).getDistance(cursors.get(1));
+        //println("Distance travelled: " + cursors.get(0).getDistance(initialDirtyPos) + "   Deviation: " + abs(initialDistance - currentDistance));
+        if (abs(initialDistance - currentDistance) < distanceDeviationThreshold) {
+          float travelledDistance = cursors.get(0).getDistance(initialDirtyPos);
+          if (abs(travelledDistance) > distanceThreshold) { // Making sure minimum distance travelled together is met
+            // TODO: Add min and max time
+            return Gesture.MATCH;
+          } else {
+            return Gesture.UNCLEAR;
+          }
+        } else {
+          return Gesture.NO_MATCH;
+        }
+      }
+    }
+  }
+  
+  public TuioPoint calcPosBetween (TuioPoint a, TuioPoint b) {
+      float aX = a.getX();
+      float aY = a.getY();
+      return new TuioPoint(aX + ((b.getX()-aX)/2.0), aY + ((b.getY()-aY)/2.0));
+  }
+
+  TuioPoint scrollPos;
+  int nextStepX = 0;
+  int nextStepY = 0;
+
+  public void updateScrollActions() {  
+    // Start scrolling size or intensity
+    scrollPos = calcPosBetween(cursors.get(0).getPosition(), cursors.get(1).getPosition());
+    nextStepX = -round(((scrollPos.getX() - initialPos.getX()) * width) / stepMod);
+    nextStepY = round(((scrollPos.getY() - initialPos.getY()) * height) / stepMod);
+    float scrollAngle = initialPos.getAngleDegrees(scrollPos); //<>//
+    float angleThresholdHalf = angleThreshold / 2;
+    boolean validAngle = true;
+    
+    // TODO: Lock one direction
+    if (scrollAngle > 360-angleThresholdHalf || scrollAngle < angleThresholdHalf) {mapManager.changeIntensity(nextStepX);}          // Right
+    else if (scrollAngle > 90-angleThresholdHalf && scrollAngle < 90+angleThresholdHalf) {mapManager.changeRadius(nextStepY);}      // Up
+    else if (scrollAngle > 180-angleThresholdHalf && scrollAngle < 180+angleThresholdHalf) {mapManager.changeIntensity(nextStepX);}  // Left
+    else if (scrollAngle > 270-angleThresholdHalf && scrollAngle < 270+angleThresholdHalf) {mapManager.changeRadius(nextStepY);}     // Down
+    else {validAngle = false;}
+    
+    if (validAngle && doDebugOverlay) {
+      stroke(color(0,255,0));
+      line(initialPos.getScreenX(width), initialPos.getScreenY(height), scrollPos.getScreenX(width), scrollPos.getScreenY(height));
+    }
+  }
+}
+
 
 public class TouchManager {
   float maxInitialGestureDistance = 0.5f;
@@ -207,6 +328,7 @@ public class TouchManager {
     //TODO add gesture for all supported gestures
     uncertainGestures.add(new ToolGesture(newCursorList));
     uncertainGestures.add(new PinchGesture(newCursorList));
+    uncertainGestures.add(new ScrollGesture(newCursorList));
   }
 
   public void updateCursor(TuioCursor cursor) {
@@ -219,7 +341,7 @@ public class TouchManager {
       Gesture gesture = iterator.next();
       float certainty = gesture.evaluatePotential();
       if (certainty <= Gesture.NO_MATCH) {
-        iterator.remove();
+        iterator.remove(); // TODO: ConcurrentModificationException
         boolean last = true;
         for (Gesture otherGesture : uncertainGestures) {
           if (otherGesture.getCursors().equals(gesture.getCursors())) {
@@ -249,7 +371,7 @@ public class TouchManager {
 }
 
 TouchManager touchManager = new TouchManager();
-
+MapManager mapManager;
 
 boolean verbose = false;
 boolean callback = false;
@@ -257,7 +379,8 @@ boolean callback = false;
 void setup()
 {
   //noCursor();
-  size(600, 600);
+  size(1000, 700);
+  //size(300, 200); // For FullRefresh mode
   noStroke();
   fill(0);
 
@@ -268,45 +391,60 @@ void setup()
   scale_factor = height/table_size;
 
   tuioClient  = new TuioProcessing(this);
+  
+  mapManager = new MapManager();
+  mapManager.drawAll();
 }
 
 void draw()
 {
-  background(255, 255, 255);
-  textFont(font, 12*scale_factor);
-
-
-  String infotext = touchManager.unrecognizedGestures.size() + " unrecognized gestures\n" +
-    touchManager.uncertainGestures.size() + " uncertain gestures\n" +
-    touchManager.activeGestures.size() + " active gestures\n";
-
-  infotext += "Unrecognized gestures:\n";
-  touchManager.update();
-  int cursorListCount = 0;
-  for (ArrayList<TuioCursor> cursorList : touchManager.unrecognizedGestures) {
-    String name = "Unrecognized " + cursorListCount;
-    printCursorList(cursorList, name);
-
-    cursorListCount++;
-    infotext += "    " + name + "\n";
+  //background(255, 255, 255);
+  
+  if (doFullRefresh) {
+    mapManager.drawAll(); // Maybe go back to not drawing every pixel on every frame... this whole drawing the map from height array might need a rework, maybe simply cutting the resolution for that in 4 or 8 would do the trick
   }
-
-  infotext += "Uncertain gestures:\n";
-  for (Gesture gesture : touchManager.uncertainGestures) {
-    String name = gesture.getClass().getSimpleName();
-    printCursorList(gesture.getCursors(), name);
-    infotext += "    " + name + "\n";
+  
+  String infotext = "";
+  
+  if (doDebugOverlay) {
+    textFont(font, 12*scale_factor);
+  
+     infotext += touchManager.unrecognizedGestures.size() + " unrecognized gestures\n" +
+      touchManager.uncertainGestures.size() + " uncertain gestures\n" +
+      touchManager.activeGestures.size() + " active gestures\n";
+  
+    infotext += "Unrecognized gestures:\n";
   }
-
-  infotext += "Active gestures:\n";
-  for (Gesture gesture : touchManager.activeGestures) {
-    String name = gesture.getClass().getSimpleName();
-    printCursorList(gesture.getCursors(), name);
-    infotext += "    " + name + "\n";
+  
+    touchManager.update();
+    
+  if (doDebugOverlay) {
+    int cursorListCount = 0;
+    for (ArrayList<TuioCursor> cursorList : touchManager.unrecognizedGestures) {
+      String name = "Unrecognized " + cursorListCount;
+      printCursorList(cursorList, name);
+  
+      cursorListCount++;
+      infotext += "    " + name + "\n";
+    }
+  
+    infotext += "Uncertain gestures:\n";
+    for (Gesture gesture : touchManager.uncertainGestures) { // TODO: ConcurrentModificationException
+      String name = gesture.getClass().getSimpleName();
+      printCursorList(gesture.getCursors(), name);
+      infotext += "    " + name + "\n";
+    }
+  
+    infotext += "Active gestures:\n";
+    for (Gesture gesture : touchManager.activeGestures) {
+      String name = gesture.getClass().getSimpleName();
+      printCursorList(gesture.getCursors(), name);
+      infotext += "    " + name + "\n";
+    }
+  
+      fill(0);
+      text( infotext, (5*scale_factor), (15*scale_factor));
   }
-
-  fill(0);
-  text( infotext, (5*scale_factor), (15*scale_factor));
 }
 
 void printCursorList(ArrayList<TuioCursor> cursorList, String name) {
@@ -393,4 +531,186 @@ void removeTuioObject(TuioObject tobj) {
 }
 void refresh(TuioTime frameTime) {
   if (verbose) println("frame #"+frameTime.getFrameID()+" ("+frameTime.getTotalMilliseconds()+")");
+}
+
+enum Tool {
+  RAISE_TERRAIN,
+  LOWER_TERRAIN,
+  BLUR_TERRAIN
+}
+
+class MapManager {
+  int[][] terrainHeight;
+  
+  final color[] heightColors = new color[501];
+  final color lineColor = color(30,30,30);
+  
+  int brushRadius = 50;
+  int brushIntensity = 10;
+  ArrayList<int[]> brushPixels = new ArrayList<int[]>();
+  
+  Tool tool = Tool.RAISE_TERRAIN;
+  
+  // int resCutHeight = height / 4;
+  // int resCutWidth = width / 4;
+    
+  MapManager() { 
+    terrainHeight = new int[height][width];
+    
+    initTerrainHeight();
+    initHeightColors();
+    calcBrush(brushRadius);
+  }
+  
+  void useTool(TuioPoint toolPosition) {
+    int toolX = round(toolPosition.getX()*width); 
+    int toolY = round(toolPosition.getY()*height); 
+    if (tool == Tool.BLUR_TERRAIN) {
+      int[][] terrainHeightCopy = terrainHeight;
+      
+      int smoothingIntensity = brushIntensity / 4;
+      
+      for (int[] pixel : brushPixels) {
+        int col = pixel[0] + toolX;
+        int row = pixel[1] + toolY;
+
+        if (col > 0 && row > 0 && col < width && row < height) {
+          float avg = 0;
+          float smoothingDivider = 0;
+          
+          for (int i = -smoothingIntensity; i <= smoothingIntensity; i++) {
+            for (int j = -smoothingIntensity; j <= smoothingIntensity; j++) {
+              int coli = col + i;
+              int rowj = row + j;
+              if (coli > 0 && rowj > 0 && coli < width && rowj < height) {
+                float weight = (float(smoothingIntensity - abs(i)) / float(smoothingIntensity * 2)) + (float(smoothingIntensity - abs(j)) / float(smoothingIntensity * 2));
+                avg += terrainHeight[rowj][coli] * weight;
+                smoothingDivider += weight;
+              }
+            }
+          }
+          avg = avg / smoothingDivider;
+          terrainHeightCopy[row][col] = round(avg);
+        }
+      }
+      
+      for (int[] pixel : brushPixels) {
+        int col = pixel[0] + toolX;
+        int row = pixel[1] + toolY;
+        if (col > 0 && row > 0 && col < width && row < height) {
+          changePoint(col, row, terrainHeightCopy[row][col]);
+        }
+      }
+            
+    } else {
+      for (int[] pixel : brushPixels) {
+        int col = pixel[0] + toolX;
+        int row = pixel[1] + toolY;
+        if (col > 0 && row > 0 && col < width && row < height) {
+          if (tool == Tool.RAISE_TERRAIN) {
+              changePoint(col, row, constrain(terrainHeight[row][col] + brushIntensity, 0, 500));
+          } else if (tool == Tool.LOWER_TERRAIN) {
+              changePoint(col, row, constrain(terrainHeight[row][col] - brushIntensity, 0, 500));
+          }
+        } 
+      }
+    }
+  }
+  
+  void changeTool (Tool newTool) {
+      tool = newTool;
+  }
+  
+  void changeRadius (int change) {
+    brushRadius -= change;
+    brushRadius = constrain(brushRadius,1,100);
+    calcBrush (brushRadius);
+    if (doDebugOverlay) {
+      textFont(font, 12*scale_factor);
+      fill(0);  
+      text("Radius: " + brushRadius, 0, height-20);
+    }
+    println("Radius: " + brushRadius);
+  }
+  
+  void changeIntensity (int change) {
+    brushIntensity -= change;
+    brushIntensity = constrain(brushIntensity,4,100);
+    if (doDebugOverlay) {
+      textFont(font, 12*scale_factor);
+      fill(0);
+      text("Intensity: " + brushIntensity, 0, height-40);
+    }
+    println("Intensity: " + brushIntensity);
+  }
+  
+  
+  void calcBrush (int radius) {
+    brushPixels.clear();
+    int radiusSquared = radius * radius;
+    
+    for (int row = -brushRadius; row < brushRadius; row++) {
+      for (int col = -brushRadius; col < brushRadius; col++) {
+        float distanceSquared = (row) * (row) + (col) * (col);
+        if (distanceSquared <= radiusSquared) {
+          int[] pixel = {col,row};
+          brushPixels.add(pixel);
+        }
+      } 
+    } 
+  }
+  
+  void changePoint (int col, int row, int newValue) {
+    terrainHeight[row][col] = newValue;
+    stroke(heightColors[terrainHeight[row][col]]);
+    point(col, row);
+  }
+  
+  void drawAll() {
+    for (int row = 0; row < height; row++) {
+      for (int col = 0; col < width; col++) {
+        stroke(heightColors[terrainHeight[row][col]]);
+        point(col, row);
+      }
+    }
+  }
+  
+  void initTerrainHeight() {
+    for (int row = 0; row < height; row++) {
+      for (int col = 0; col < width; col++) {
+        // TODO: some more interesting initialization with noise or something
+        terrainHeight[row][col] = 0;
+      }
+    }
+  }
+  
+  void initHeightColors() {
+    heightColors[0] = color(50, 120, 200);
+    heightColors[100] = color(150, 200, 255);
+    heightColors[200] = color(150, 190, 140);
+    heightColors[300] = color(240, 240, 190);
+    heightColors[400] = color(170, 135, 80);
+    heightColors[500] = color(230, 230, 220);
+    
+    // TODO: How would a color gradient be better programmed?
+    for (int i = 0; i < 100; i++) {
+      heightColors[i] = lerpColor(heightColors[0], heightColors[100], float(i)/100);
+    }
+    
+    for (int i = 100; i < 200; i++) {
+      heightColors[i] = lerpColor(heightColors[100], heightColors[200], float(i-100)/100);
+    }
+    
+    for (int i = 200; i < 300; i++) {
+      heightColors[i] = lerpColor(heightColors[200], heightColors[300], float(i-200)/100);
+    }
+    
+    for (int i = 300; i < 400; i++) {
+      heightColors[i] = lerpColor(heightColors[300], heightColors[400], float(i-300)/100);
+    }
+    
+    for (int i = 400; i < 500; i++) {
+      heightColors[i] = lerpColor(heightColors[400], heightColors[500], float(i-400)/100);
+    }
+  }
 }
