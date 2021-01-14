@@ -93,6 +93,7 @@ public class PinchGesture extends Gesture {
 
   float angleThreshold = 30.0;
   float distanceThreshold = 0.1;
+  float distanceToButtonsThreshold = 0.15;
 
   public PinchGesture(ArrayList<TuioCursor> cursors) {
     super(cursors);
@@ -167,22 +168,43 @@ public class PinchGesture extends Gesture {
       }
 
       // TODO: show actual menue
-      if (doDebugOverlay) {
-        stroke(0, 255, 0);
-        line(menueX - 300, menueY, menueX + 300, menueY);
-        line(menueX, menueY - 300, menueX, menueY + 300);
+      //if (doDebugOverlay) {
+        //stroke(0, 255, 0);
+        //line(menueX - 300, menueY, menueX + 300, menueY);
+        //line(menueX, menueY - 300, menueX, menueY + 300);
+      //}
+          
+      image(buttons.get("Raise")[0], menueX-250, menueY-125);
+      image(buttons.get("Lower")[0], menueX-125, menueY-250);
+      image(buttons.get("Smooth")[0], menueX+25, menueY-250);
+      image(buttons.get("Special")[0], menueX+150, menueY-125);
+      
+      float menueChoosenAngle = menuePos.getAngleDegrees(menueCursor.getPosition());
+      Tool selectedTool = Tool.SPECIAL;
+      
+      if (menuePos.getDistance(menueCursor.getPosition()) > distanceToButtonsThreshold) {
+      
+        if (menueChoosenAngle > 0 && menueChoosenAngle < 55) {
+          image(buttons.get("Special")[1], menueX+150, menueY-125);
+          selectedTool = Tool.SPECIAL;
+        }
+        else if (menueChoosenAngle < 90) {
+          image(buttons.get("Smooth")[1], menueX+25, menueY-250);
+          selectedTool = Tool.BLUR_TERRAIN;
+        }
+        else if (menueChoosenAngle < 135) {
+          image(buttons.get("Lower")[1], menueX-125, menueY-250);
+          selectedTool = Tool.LOWER_TERRAIN;
+        }
+        else if (menueChoosenAngle < 180) {
+          image(buttons.get("Raise")[1], menueX-250, menueY-125);
+          selectedTool = Tool.RAISE_TERRAIN;
+        }
         
-        image(buttons.get("Raise")[0], 100, 100);
-        image(buttons.get("Lower")[1], 220, 100);
-        image(buttons.get("Smooth")[2], 340, 100);
-      }
-      if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED && cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
-        float menueChoosenAngle = menuePos.getAngleDegrees(menueCursor.getPosition());
-        if (menueChoosenAngle > 0 && menueChoosenAngle < 90) {mapManager.changeTool(Tool.RAISE_TERRAIN);}
-        else if (menueChoosenAngle < 180) {mapManager.changeTool(Tool.LOWER_TERRAIN);}
-        else if (menueChoosenAngle < 270) {mapManager.changeTool(Tool.BLUR_TERRAIN);}
-        else {}
-        println("Closing menue: " + menueChoosenAngle + " and changed Tool to: " + mapManager.tool.toString());
+        if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED && cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
+          mapManager.changeTool(selectedTool);
+          println("Closing menue: " + menueChoosenAngle + " and changed Tool to: " + mapManager.tool.toString());
+        }
       }
     }
   }
@@ -197,7 +219,7 @@ public class ScrollGesture extends Gesture {
   TuioPoint initialPos;
   boolean initialized = false;
 
-  float angleThreshold = 20; // Eg. 80°-100° = brushSize up 
+  float angleThreshold = 20; // Eg. 80°-100° = brushSize up  //<>//
   float distanceDeviationThreshold = 0.05;
   float distanceThreshold = 0.05;
   
@@ -219,7 +241,7 @@ public class ScrollGesture extends Gesture {
   }
 
   public float evaluatePotential() {
-    if (cursors.size() != 2) { //<>//
+    if (cursors.size() != 2) {
       return Gesture.NO_MATCH;
     } else {
       if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED || cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
@@ -329,7 +351,7 @@ public class TouchManager {
   public void update() {
     //Evaluate gestures
     for (Iterator<Gesture> iterator = uncertainGestures.iterator(); iterator.hasNext(); ) {
-      Gesture gesture = iterator.next();
+      Gesture gesture = iterator.next(); // TODO: ConcurrentModificationException
       float certainty = gesture.evaluatePotential();
       if (certainty <= Gesture.NO_MATCH) {
         iterator.remove(); // TODO: ConcurrentModificationException
@@ -409,8 +431,6 @@ void draw()
   String infotext = "";
   
   if (doDebugOverlay) {
-    textFont(font, 12*scale_factor);
-  
      infotext += touchManager.unrecognizedGestures.size() + " unrecognized gestures\n" +
       touchManager.uncertainGestures.size() + " uncertain gestures\n" +
       touchManager.activeGestures.size() + " active gestures\n";
@@ -443,9 +463,11 @@ void draw()
       printCursorList(gesture.getCursors(), name);
       infotext += "    " + name + "\n";
     }
-  
+      textFont(font, 12*scale_factor);
       fill(0);
       text( infotext, (5*scale_factor), (15*scale_factor));
+      text("Radius: " + mapManager.brushRadius, (5*scale_factor), height-(10*scale_factor));
+      text("Intensity: " + mapManager.brushIntensity, (5*scale_factor), height-(30*scale_factor));
   }
 }
 
@@ -553,13 +575,19 @@ void loadButtons() {
   buttonArray[1] = loadImage("Buttons_Smooth_2.png");
   buttonArray[2] = loadImage("Buttons_Smooth_3.png");
   buttons.put("Smooth", buttonArray.clone());
+
+  buttonArray[0] = loadImage("Buttons_Special_1.png");
+  buttonArray[1] = loadImage("Buttons_Special_2.png");
+  buttonArray[2] = loadImage("Buttons_Special_3.png");
+  buttons.put("Special", buttonArray.clone());
 }
 
 
 enum Tool {
   RAISE_TERRAIN,
   LOWER_TERRAIN,
-  BLUR_TERRAIN
+  BLUR_TERRAIN,
+  SPECIAL
 }
 
   int[][] terrainHeight;
@@ -644,23 +672,11 @@ class MapManager {
     brushRadius -= change;
     brushRadius = constrain(brushRadius,1,100);
     calcBrush (brushRadius);
-    if (doDebugOverlay) {
-      textFont(font, 12*scale_factor);
-      fill(0);  
-      text("Radius: " + brushRadius, 0, height-20);
-    }
-    println("Radius: " + brushRadius);
   }
   
   void changeIntensity (int change) {
     brushIntensity -= change;
     brushIntensity = constrain(brushIntensity,4,100);
-    if (doDebugOverlay) {
-      textFont(font, 12*scale_factor);
-      fill(0);
-      text("Intensity: " + brushIntensity, 0, height-40);
-    }
-    println("Intensity: " + brushIntensity);
   }
   
   
