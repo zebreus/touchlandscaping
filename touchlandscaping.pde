@@ -170,7 +170,11 @@ public class PinchGesture extends Gesture {
       if (doDebugOverlay) {
         stroke(0, 255, 0);
         line(menueX - 300, menueY, menueX + 300, menueY);
-        line(menueX, menueY - 300, menueX, menueY + 300);  
+        line(menueX, menueY - 300, menueX, menueY + 300);
+        
+        image(buttons.get("Raise")[0], 100, 100);
+        image(buttons.get("Lower")[1], 220, 100);
+        image(buttons.get("Smooth")[2], 340, 100);
       }
       if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED && cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
         float menueChoosenAngle = menuePos.getAngleDegrees(menueCursor.getPosition());
@@ -215,11 +219,11 @@ public class ScrollGesture extends Gesture {
   }
 
   public float evaluatePotential() {
-    if (cursors.size() != 2) {
+    if (cursors.size() != 2) { //<>//
       return Gesture.NO_MATCH;
     } else {
       if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED || cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
-        return Gesture.NO_MATCH; //<>//
+        return Gesture.NO_MATCH;
       }
       if (!initialized) {
         initialDistance = cursors.get(0).getDistance(cursors.get(1));
@@ -364,6 +368,7 @@ boolean verbose = false;
 boolean callback = false;
 
 PGraphics mapImage;
+Map<String, PImage[]> buttons;
 
 void setup()
 {
@@ -381,15 +386,17 @@ void setup()
   tuioClient  = new TuioProcessing(this);
   mapManager = new MapManager();
   mapImage = createGraphics(width, height); //<>//
+  loadButtons();
   delay(200);
 }
 
 void draw()
 {
   mapImage.beginDraw();
+  mapImage.noStroke();
   for (int row = 0; row < height; row++) {
     for (int col = 0; col < width; col++) {
-      if (changeOccured[row][col] && terrainHeight[row][col] > 0) {
+      if (changeOccured[row][col]) {
         changeOccured[row][col] = false;
         mapImage.stroke(heightColors[terrainHeight[row][col]]);
         mapImage.point(col, row);  
@@ -527,6 +534,27 @@ void removeTuioObject(TuioObject tobj) {
 void refresh(TuioTime frameTime) {
   if (verbose) println("frame #"+frameTime.getFrameID()+" ("+frameTime.getTotalMilliseconds()+")");
 }
+
+void loadButtons() {
+  buttons = new HashMap<String, PImage[]>();
+   
+  PImage[] buttonArray = new PImage[3];
+  buttonArray[0] = loadImage("Buttons_Raise_1.png");
+  buttonArray[1] = loadImage("Buttons_Raise_2.png");
+  buttonArray[2] = loadImage("Buttons_Raise_3.png");
+  buttons.put("Raise", buttonArray.clone());
+  
+  buttonArray[0] = loadImage("Buttons_Lower_1.png");
+  buttonArray[1] = loadImage("Buttons_Lower_2.png");
+  buttonArray[2] = loadImage("Buttons_Lower_3.png");
+  buttons.put("Lower", buttonArray.clone());
+  
+  buttonArray[0] = loadImage("Buttons_Smooth_1.png");
+  buttonArray[1] = loadImage("Buttons_Smooth_2.png");
+  buttonArray[2] = loadImage("Buttons_Smooth_3.png");
+  buttons.put("Smooth", buttonArray.clone());
+}
+
 
 enum Tool {
   RAISE_TERRAIN,
