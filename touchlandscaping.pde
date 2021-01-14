@@ -14,20 +14,7 @@ float table_size = 760;
 float scale_factor = 1;
 PFont font;
 
-boolean doFullRefresh = false; // Drawing every pixel on every frame is very slow, TODO: check if going through the full array is slow or drawing, as then there could be some way to only draw the delta from the last frame or scaled resolution or something
-boolean doDebugOverlay = false; // Looks very strange without full refresh
-
-/*
-Potential lag solution:
-
-- Creating the PGraphics object at global scope: PGraphics pg;
-- Setting it up in setup(): pg = createGraphics( width, height );
-- pg.beginDraw(); in draw()
-- moving draw functions to use it. i.e: ellipse(...) -> pg.ellipse(...)
-- pg.endDraw(); in draw()
-- Using it: image( pg.get(0,0,width,height), 0,0); 
-
-*/
+boolean doDebugOverlay = true;
 
 public abstract class Gesture {
   public static final float NO_MATCH = 0.0f;
@@ -67,7 +54,7 @@ public class ToolGesture extends Gesture {
 
   public boolean update() {
     
-    mapManager.useTool(cursors.get(0).getPosition()); //<>//
+    mapManager.useTool(cursors.get(0).getPosition());
     
     if (cursors.get(0).getTuioState() != TuioCursor.TUIO_REMOVED) {
       return true;
@@ -219,7 +206,7 @@ public class ScrollGesture extends Gesture {
   public boolean update() {
 
     updateScrollActions();
- //<>//
+
     if (cursors.get(0).getTuioState() != TuioCursor.TUIO_REMOVED && cursors.get(1).getTuioState() != TuioCursor.TUIO_REMOVED) {
       return true;
     } else {
@@ -232,7 +219,7 @@ public class ScrollGesture extends Gesture {
       return Gesture.NO_MATCH;
     } else {
       if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED || cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
-        return Gesture.NO_MATCH;
+        return Gesture.NO_MATCH; //<>//
       }
       if (!initialized) {
         initialDistance = cursors.get(0).getDistance(cursors.get(1));
@@ -273,7 +260,7 @@ public class ScrollGesture extends Gesture {
     scrollPos = calcPosBetween(cursors.get(0).getPosition(), cursors.get(1).getPosition());
     nextStepX = -round(((scrollPos.getX() - initialPos.getX()) * width) / stepMod);
     nextStepY = round(((scrollPos.getY() - initialPos.getY()) * height) / stepMod);
-    float scrollAngle = initialPos.getAngleDegrees(scrollPos); //<>//
+    float scrollAngle = initialPos.getAngleDegrees(scrollPos);
     float angleThresholdHalf = angleThreshold / 2;
     boolean validAngle = true;
     
@@ -376,11 +363,12 @@ MapManager mapManager;
 boolean verbose = false;
 boolean callback = false;
 
+PGraphics mapImage;
+
 void setup()
 {
   //noCursor();
   size(1000, 700);
-  //size(300, 200); // For FullRefresh mode
   noStroke();
   fill(0);
 
@@ -391,18 +379,25 @@ void setup()
   scale_factor = height/table_size;
 
   tuioClient  = new TuioProcessing(this);
-  
   mapManager = new MapManager();
-  mapManager.drawAll();
+  mapImage = createGraphics(width, height); //<>//
+  delay(200);
 }
 
 void draw()
 {
-  //background(255, 255, 255);
-  
-  if (doFullRefresh) {
-    mapManager.drawAll(); // Maybe go back to not drawing every pixel on every frame... this whole drawing the map from height array might need a rework, maybe simply cutting the resolution for that in 4 or 8 would do the trick
+  mapImage.beginDraw();
+  for (int row = 0; row < height; row++) {
+    for (int col = 0; col < width; col++) {
+      if (changeOccured[row][col] && terrainHeight[row][col] > 0) {
+        changeOccured[row][col] = false;
+        mapImage.stroke(heightColors[terrainHeight[row][col]]);
+        mapImage.point(col, row);  
+      }
+    }
   }
+  mapImage.endDraw();
+  image(mapImage, 0, 0); 
   
   String infotext = "";
   
@@ -416,7 +411,7 @@ void draw()
     infotext += "Unrecognized gestures:\n";
   }
   
-    touchManager.update();
+  touchManager.update();
     
   if (doDebugOverlay) {
     int cursorListCount = 0;
@@ -539,24 +534,20 @@ enum Tool {
   BLUR_TERRAIN
 }
 
-class MapManager {
   int[][] terrainHeight;
+  boolean[][] changeOccured;
   
   final color[] heightColors = new color[501];
   final color lineColor = color(30,30,30);
-  
+
+class MapManager {
   int brushRadius = 50;
   int brushIntensity = 10;
   ArrayList<int[]> brushPixels = new ArrayList<int[]>();
   
   Tool tool = Tool.RAISE_TERRAIN;
-  
-  // int resCutHeight = height / 4;
-  // int resCutWidth = width / 4;
     
-  MapManager() { 
-    terrainHeight = new int[height][width];
-    
+  MapManager() {  
     initTerrainHeight();
     initHeightColors();
     calcBrush(brushRadius);
@@ -662,24 +653,18 @@ class MapManager {
   
   void changePoint (int col, int row, int newValue) {
     terrainHeight[row][col] = newValue;
-    stroke(heightColors[terrainHeight[row][col]]);
-    point(col, row);
-  }
-  
-  void drawAll() {
-    for (int row = 0; row < height; row++) {
-      for (int col = 0; col < width; col++) {
-        stroke(heightColors[terrainHeight[row][col]]);
-        point(col, row);
-      }
-    }
+    changeOccured[row][col] = true; 
   }
   
   void initTerrainHeight() {
+    terrainHeight = new int[height][width];
+    changeOccured = new boolean[height][width];
+    
     for (int row = 0; row < height; row++) {
       for (int col = 0; col < width; col++) {
         // TODO: some more interesting initialization with noise or something
         terrainHeight[row][col] = 0;
+        changeOccured[row][col] = true;
       }
     }
   }
