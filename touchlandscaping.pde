@@ -223,7 +223,7 @@ public class ScrollGesture extends Gesture {
   float distanceDeviationThreshold = 0.05;
   float distanceThreshold = 0.05;
   
-  int stepMod = 300;  // TODO: Somehow rework the step system to be nicer
+  int stepMod = 400;  // TODO: Somehow rework the step system to be nicer
   
   public ScrollGesture(ArrayList<TuioCursor> cursors) {
     super(cursors);
@@ -278,14 +278,17 @@ public class ScrollGesture extends Gesture {
   }
 
   TuioPoint scrollPos;
-  int nextStepX = 0;
-  int nextStepY = 0;
+  float nextStepX = 0;
+  float nextStepY = 0;
 
   public void updateScrollActions() {  
     // Start scrolling size or intensity
     scrollPos = calcPosBetween(cursors.get(0).getPosition(), cursors.get(1).getPosition());
-    nextStepX = -round(((scrollPos.getX() - initialPos.getX()) * width) / stepMod);
-    nextStepY = round(((scrollPos.getY() - initialPos.getY()) * height) / stepMod);
+    nextStepX = -(((scrollPos.getX() - initialPos.getX()) * width) / stepMod);
+    nextStepY = (((scrollPos.getY() - initialPos.getY()) * height) / stepMod);
+    println(((scrollPos.getY() - initialPos.getY()) * height));
+    println(nextStepY);
+    
     float scrollAngle = initialPos.getAngleDegrees(scrollPos);
     float angleThresholdHalf = angleThreshold / 2;
     boolean validAngle = true;
@@ -590,15 +593,18 @@ enum Tool {
   SPECIAL
 }
 
-  int[][] terrainHeight;
-  boolean[][] changeOccured;
-  
-  final color[] heightColors = new color[501];
-  final color lineColor = color(30,30,30);
+int[][] terrainHeight;
+boolean[][] changeOccured;
+
+final color[] heightColors = new color[501];
+final color lineColor = color(30,30,30);
 
 class MapManager {
   int brushRadius = 50;
+  float brushRadiusPrecise = 50.0;
   int brushIntensity = 10;
+  float brushIntensityPrecise = 10.0;
+    
   ArrayList<int[]> brushPixels = new ArrayList<int[]>();
   
   Tool tool = Tool.RAISE_TERRAIN;
@@ -668,15 +674,19 @@ class MapManager {
       tool = newTool;
   }
   
-  void changeRadius (int change) {
-    brushRadius -= change;
-    brushRadius = constrain(brushRadius,1,100);
-    calcBrush (brushRadius);
+  void changeRadius (float change) {
+    brushRadiusPrecise -= change;
+    brushRadiusPrecise = constrain(brushRadiusPrecise,1,100);
+    if (brushRadius != round(brushRadiusPrecise)) {
+      brushRadius = round(brushRadiusPrecise);
+      calcBrush (brushRadius);
+    }
   }
   
-  void changeIntensity (int change) {
-    brushIntensity -= change;
-    brushIntensity = constrain(brushIntensity,4,100);
+  void changeIntensity (float change) {
+    brushIntensityPrecise -= change;
+    brushIntensityPrecise = constrain(brushIntensityPrecise,4,100);
+    brushIntensity = round(brushIntensityPrecise);
   }
   
   
