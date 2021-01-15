@@ -306,8 +306,8 @@ public class ScrollGesture extends Gesture {
       validAngle = false;
     }
     
-    stroke(lineColor);
-    fill(color(red(lineColor), green(lineColor), blue(lineColor), round(mapManager.brushIntensityPrecise/100*255)));
+    stroke(color(50, 50, 50, 255));
+    fill(color(50, 50, 50, round(mapManager.brushIntensityPrecise/100*255)));
     ellipse(initialPos.getScreenX(width), initialPos.getScreenY(height), mapManager.brushRadius*2, mapManager.brushRadius*2); 
     
     if (validAngle && doDebugOverlay) {
@@ -403,6 +403,8 @@ boolean verbose = false;
 boolean callback = false;
 
 PGraphics mapImage;
+PGraphics ringImage;
+
 Map<String, PImage[]> buttons;
 
 void setup()
@@ -421,6 +423,7 @@ void setup()
   tuioClient  = new TuioProcessing(this);
   mapManager = new MapManager();
   mapImage = createGraphics(width, height);
+  ringImage = createGraphics(width, height);
   loadButtons();
   
   // Special gesture recognizer
@@ -440,7 +443,10 @@ void foo(String gestureName, float percentOfSimilarity, int startX, int startY, 
 void draw()
 {
   mapManager.drawToMapImage();
+  mapManager.drawRingImage();
+
   image(mapImage, 0, 0); 
+  image(ringImage, 0, 0); 
       
   String infotext = "";
   
@@ -608,7 +614,7 @@ int[][] terrainHeight;
 boolean[][] changeOccured;
 
 final color[] heightColors = new color[501];
-final color lineColor = color(50,50,50);
+final color lineColor = color(0,0,0, 70);
 
 class MapManager {
   int brushRadius = 50;
@@ -628,7 +634,6 @@ class MapManager {
   
   void drawToMapImage() {
     mapImage.beginDraw();
-    mapImage.noStroke();
     for (int row = 0; row < height; row++) {
       for (int col = 0; col < width; col++) {
         if (changeOccured[row][col]) {
@@ -639,6 +644,55 @@ class MapManager {
       }
     }
     mapImage.endDraw();
+  }
+  
+  void drawRingImage() {
+    ringImage.beginDraw();
+    ringImage.clear();
+    for (int row = 1; row < height; row++) {
+      for (int col = 1; col < width; col++) {      
+        int sum = terrainHeight[row][col] > 300 ? 1 : 0;
+        sum += terrainHeight[row-1][col] > 300 ? 1 : 0;
+        sum += terrainHeight[row][col-1] > 300 ? 1 : 0;
+        sum += terrainHeight[row-1][col-1] > 300 ? 1 : 0;
+
+        if (sum > 0 && sum < 4) {
+          ringImage.stroke(lineColor);
+          ringImage.point(col, row);  
+        }
+        
+        sum = terrainHeight[row][col] > 350 ? 1 : 0;
+        sum += terrainHeight[row-1][col] > 350 ? 1 : 0;
+        sum += terrainHeight[row][col-1] > 350 ? 1 : 0;
+        sum += terrainHeight[row-1][col-1] > 350 ? 1 : 0;
+
+        if (sum > 0 && sum < 4) {
+          ringImage.stroke(lineColor);
+          ringImage.point(col, row);  
+        }
+        
+        sum = terrainHeight[row][col] > 400 ? 1 : 0;
+        sum += terrainHeight[row-1][col] > 400 ? 1 : 0;
+        sum += terrainHeight[row][col-1] > 400 ? 1 : 0;
+        sum += terrainHeight[row-1][col-1] > 400 ? 1 : 0;
+
+        if (sum > 0 && sum < 4) {
+          ringImage.stroke(lineColor);
+          ringImage.point(col, row);  
+        }
+        
+        sum = terrainHeight[row][col] > 450 ? 1 : 0;
+        sum += terrainHeight[row-1][col] > 450 ? 1 : 0;
+        sum += terrainHeight[row][col-1] > 450 ? 1 : 0;
+        sum += terrainHeight[row-1][col-1] > 450 ? 1 : 0;
+
+        if (sum > 0 && sum < 4) {
+          ringImage.stroke(lineColor);
+          ringImage.point(col, row);  
+        }
+      }
+    }
+    ringImage.endDraw();
   }
   
   void useTool(TuioPoint toolPosition) {
