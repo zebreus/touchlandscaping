@@ -6,11 +6,12 @@ class MapManager {
   final color lineColor = color(0,0,0, 70);
 
   int brushRadius = 50;
-  float brushRadiusPrecise = 50.0;
-  int brushIntensity = 10;
-  float brushIntensityPrecise = 10.0;
+  int brushRadiusCache = brushRadius;
+  int brushIntensity = 20;
+  int brushIntensityCache = brushIntensity;
     
-  ArrayList<int[]> brushPixels = new ArrayList<int[]>();
+  float[][] brushPixels;
+  int[][] brushPixelsWithIntensity;
   
   Tool tool = Tool.RAISE_TERRAIN;
     
@@ -98,50 +99,66 @@ class MapManager {
       
       int smoothingIntensity = max(1, (brushIntensity / 2));
       
-      for (int[] pixel : brushPixels) {
-        int col = pixel[0] + toolX;
-        int row = pixel[1] + toolY;
-
-        if (col > 0 && row > 0 && col < width && row < height) {
-          float avg = 0;
-          float smoothingDivider = 0;
-          
-          for (int i = -smoothingIntensity; i <= smoothingIntensity; i++) {
-            for (int j = -smoothingIntensity; j <= smoothingIntensity; j++) {
-              int coli = col + i;
-              int rowj = row + j;
-              if (coli > 0 && rowj > 0 && coli < width && rowj < height) {
-                float weight = (float(smoothingIntensity - abs(i)) / float(smoothingIntensity * 2)) + (float(smoothingIntensity - abs(j)) / float(smoothingIntensity * 2));
-                avg += terrainHeight[rowj][coli] * weight;
-                smoothingDivider += weight;
+      for (int row = 0; row < brushPixels.length; row++) {
+        for (int col = 0; col < brushPixels[0].length; col++) {
+        
+          int colCorrected = col + toolX - brushRadius;
+          int rowCorrected = row + toolY - brushRadius;
+  
+          if (colCorrected > 0 && rowCorrected > 0 && colCorrected < width && rowCorrected < height) {
+            float avg = 0;
+            float smoothingDivider = 0;
+            
+            for (int i = -smoothingIntensity; i <= smoothingIntensity; i++) {
+              for (int j = -smoothingIntensity; j <= smoothingIntensity; j++) {
+                int coli = colCorrected + i;
+                int rowj = rowCorrected + j;
+                if (coli > 0 && rowj > 0 && coli < width && rowj < height) {
+                  float weight = (float(smoothingIntensity - abs(i)) / float(smoothingIntensity * 2)) + (float(smoothingIntensity - abs(j)) / float(smoothingIntensity * 2));
+                  avg += terrainHeight[rowj][coli] * weight;
+                  smoothingDivider += weight;
+                }
               }
             }
-          }
-          avg = avg / smoothingDivider;
-          terrainHeightCopy[row][col] = round(avg);
+            avg = avg / smoothingDivider;
+            terrainHeightCopy[rowCorrected][colCorrected] = round(avg);
+          } 
         }
       }
       
-      for (int[] pixel : brushPixels) {
-        int col = pixel[0] + toolX;
-        int row = pixel[1] + toolY;
-        if (col > 0 && row > 0 && col < width && row < height) {
-          changePoint(col, row, terrainHeightCopy[row][col]);
+      mapImage.beginDraw();
+      for (int row = 0; row < brushPixels.length; row++) {
+        for (int col = 0; col < brushPixels[0].length; col++) {
+        
+          int colCorrected = col + toolX - brushRadius;
+          int rowCorrected = row + toolY - brushRadius;
+          
+          if (colCorrected > 0 && rowCorrected > 0 && colCorrected < width && rowCorrected < height) {
+            changePoint(colCorrected, rowCorrected, terrainHeightCopy[rowCorrected][colCorrected]); 
+          }
         }
       }
-            
-    } else {
-      for (int[] pixel : brushPixels) {
-        int col = pixel[0] + toolX;
-        int row = pixel[1] + toolY;
-        if (col > 0 && row > 0 && col < width && row < height) {
-          if (tool == Tool.RAISE_TERRAIN) {
-              changePoint(col, row, constrain(terrainHeight[row][col] + brushIntensity, 0, 500));
-          } else if (tool == Tool.LOWER_TERRAIN) {
-              changePoint(col, row, constrain(terrainHeight[row][col] - brushIntensity, 0, 500));
+      mapImage.endDraw();
+    
+    } else if (tool == Tool.RAISE_TERRAIN || tool == Tool.LOWER_TERRAIN) {
+      
+      mapImage.beginDraw();
+      for (int row = 0; row < brushPixels.length; row++) {
+        for (int col = 0; col < brushPixels[0].length; col++) {
+        
+          int colCorrected = col + toolX - brushRadius;
+          int rowCorrected = row + toolY - brushRadius;
+          
+          if (colCorrected > 0 && rowCorrected > 0 && colCorrected < width && rowCorrected < height) {
+            if (tool == Tool.RAISE_TERRAIN) {
+                changePoint(colCorrected, rowCorrected, constrain(terrainHeight[rowCorrected][colCorrected] + brushPixelsWithIntensity[row][col], 0, 500));
+            } else if (tool == Tool.LOWER_TERRAIN) {
+                changePoint(colCorrected, rowCorrected, constrain(terrainHeight[rowCorrected][colCorrected] - brushPixelsWithIntensity[row][col], 0, 500));
+            }
           }
         } 
       }
+      mapImage.endDraw();
     }
   }
   
@@ -149,33 +166,52 @@ class MapManager {
       tool = newTool;
   }
   
-  void changeRadius (float change) {
-    brushRadiusPrecise -= change;
-    brushRadiusPrecise = constrain(brushRadiusPrecise,1,100);
-    if (brushRadius != round(brushRadiusPrecise)) {
-      brushRadius = round(brushRadiusPrecise);
+  void cacheSizeIntensity() {
+    brushRadiusCache = brushRadius;
+    brushIntensityCache = brushIntensity;
+  }
+  
+  void changeRadius (int relativeValue) {
+    if (relativeValue != 0) {
+      brushRadius = constrain(brushRadiusCache + relativeValue, 1, 100);
+      
       calcBrush (brushRadius);
     }
   }
   
-  void changeIntensity (float change) {
-    brushIntensityPrecise -= change;
-    brushIntensityPrecise = constrain(brushIntensityPrecise,1,100);
-    brushIntensity = max(1,round(brushIntensityPrecise / 6));
+  void changeIntensity (int relativeValue) {
+    if (relativeValue != 0) {
+      brushIntensity = constrain(brushIntensityCache + relativeValue, 1, 100);
+      
+      for (int row = 0; row < brushPixels.length; row++) {
+        for (int col = 0; col < brushPixels[0].length; col++) {
+          brushPixelsWithIntensity[row][col] = round(brushPixels[row][col] * brushIntensity); 
+        }
+      }
+    }
   }
   
-  
   void calcBrush (int radius) {
-    brushPixels.clear();
+    int widthHeight = (radius * 2) + 1;
+    brushPixels = new float[widthHeight][widthHeight];
+    brushPixelsWithIntensity = new int[widthHeight][widthHeight];
+
     int radiusSquared = radius * radius;
     
-    for (int row = -brushRadius; row < brushRadius; row++) {
-      for (int col = -brushRadius; col < brushRadius; col++) {
-        float distanceSquared = (row) * (row) + (col) * (col);
+    for (int row = 0; row < widthHeight; row++) {
+      for (int col = 0; col < widthHeight; col++) {
+        
+        int colCorrected = col - radius;
+        int rowCorrected = row - radius;
+        
+        float distanceSquared = (rowCorrected) * (rowCorrected) + (colCorrected) * (colCorrected);
+        
         if (distanceSquared <= radiusSquared) {
-          int[] pixel = {col,row};
-          brushPixels.add(pixel);
+          brushPixels[row][col] = 1 - (distanceSquared / radiusSquared); 
+        } else {
+          brushPixels[row][col] = 0; 
         }
+        brushPixelsWithIntensity[row][col] = round(brushPixels[row][col] * brushIntensity);
       } 
     } 
   }
@@ -183,6 +219,8 @@ class MapManager {
   void changePoint (int col, int row, int newValue) {
     terrainHeight[row][col] = newValue;
     changeOccured[row][col] = true; 
+    mapImage.stroke(heightColors[newValue]);
+    mapImage.point(col, row);  
   }
   
   void initTerrainHeight() {
@@ -207,25 +245,32 @@ class MapManager {
     heightColors[400] = color(170, 135, 80);
     heightColors[500] = color(230, 230, 220);
     
+    int stepFactor = 20;
+    
     // TODO: How would a color gradient be better programmed?
     for (int i = 0; i < 100; i++) {
-      heightColors[i] = lerpColor(heightColors[0], heightColors[100], float(i)/100);
+      int imod = int(i / stepFactor);
+      heightColors[i] = lerpColor(heightColors[0], heightColors[100], float(imod)/(100/stepFactor));
     }
     
     for (int i = 100; i < 200; i++) {
-      heightColors[i] = lerpColor(heightColors[100], heightColors[200], float(i-100)/100);
+      int imod = int(i / stepFactor);
+      heightColors[i] = lerpColor(heightColors[100], heightColors[200], float(imod-(100/stepFactor))/(100/stepFactor));
     }
     
     for (int i = 200; i < 300; i++) {
-      heightColors[i] = lerpColor(heightColors[200], heightColors[300], float(i-200)/100);
+      int imod = int(i / stepFactor);
+      heightColors[i] = lerpColor(heightColors[200], heightColors[300], float(imod-(200/stepFactor))/(100/stepFactor));
     }
     
     for (int i = 300; i < 400; i++) {
-      heightColors[i] = lerpColor(heightColors[300], heightColors[400], float(i-300)/100);
+      int imod = int(i / stepFactor);
+      heightColors[i] = lerpColor(heightColors[300], heightColors[400], float(imod-(300/stepFactor))/(100/stepFactor));
     }
     
     for (int i = 400; i < 500; i++) {
-      heightColors[i] = lerpColor(heightColors[400], heightColors[500], float(i-400)/100);
+      int imod = int(i / stepFactor);
+      heightColors[i] = lerpColor(heightColors[400], heightColors[500], float(imod-(400/stepFactor))/(100/stepFactor));
     }
   }
 }

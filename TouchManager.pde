@@ -42,6 +42,7 @@ public class TouchManager {
   }
   public void removeCursor(TuioCursor cursor) {
   }
+  
   public void update() {
     //Evaluate gestures
     for (Iterator<Gesture> iterator = uncertainGestures.iterator(); iterator.hasNext(); ) {

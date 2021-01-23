@@ -17,14 +17,12 @@ float scale_factor = 1;
 PFont font;
 OneDollar one;
 
-boolean doDebugOverlay = true;
-
 TuioProcessing tuioClient;
 
 TouchManager touchManager = new TouchManager();
 MapManager mapManager;
 
-
+boolean doDebugOverlay = true;
 boolean verbose = false;
 boolean callback = false;
 
@@ -52,6 +50,8 @@ void setup()
   ringImage = createGraphics(width, height);
   loadButtons();
   
+  mapManager.drawToMapImage();
+  
   // Special gesture recognizer
   one = new OneDollar(this);
   one.learn("triangle", new int[] {137,139,135,141,133,144,132,146,130,149,128,151,126,155,123,160,120,166,116,171,112,177,107,183,102,188,100,191,95,195,90,199,86,203,82,206,80,209,75,213,73,213,70,216,67,219,64,221,61,223,60,225,62,226,65,225,67,226,74,226,77,227,85,229,91,230,99,231,108,232,116,233,125,233,134,234,145,233,153,232,160,233,170,234,177,235,179,236,186,237,193,238,198,239,200,237,202,239,204,238,206,234,205,230,202,222,197,216,192,207,186,198,179,189,174,183,170,178,164,171,161,168,154,160,148,155,143,150,138,148,136,148} );
@@ -71,8 +71,7 @@ void foo(String gestureName, float percentOfSimilarity, int startX, int startY, 
 
 void draw()
 {
-  mapManager.drawToMapImage();
-  if (frameCount % 30 == 0) {
+  if (frameCount % 5 == 0) {
     mapManager.drawRingImage();
   }
 
@@ -82,30 +81,34 @@ void draw()
   String infotext = "";
   
   if (doDebugOverlay) {
-     infotext += touchManager.unrecognizedGestures.size() + " unrecognized gestures\n" +
-      touchManager.uncertainGestures.size() + " uncertain gestures\n" +
-      touchManager.activeGestures.size() + " active gestures\n";
+    ArrayList<Gesture> tempUncertainGestures = (ArrayList<Gesture>) touchManager.uncertainGestures.clone();
+    ArrayList<Gesture> tempActiveGestures = (ArrayList<Gesture>) touchManager.activeGestures.clone();
+    ArrayList<ArrayList<TuioCursor>> tempUnrecognizedGestures = (ArrayList<ArrayList<TuioCursor>>) touchManager.unrecognizedGestures.clone();
+    
+    infotext += tempUncertainGestures.size() + " unrecognized gestures\n" +
+    tempUncertainGestures.size() + " uncertain gestures\n" +
+    tempActiveGestures.size() + " active gestures\n";
   
     infotext += "Unrecognized gestures:\n";
 
-    int cursorListCount = 0;
-    for (ArrayList<TuioCursor> cursorList : touchManager.unrecognizedGestures) { // TODO: ConcurrentModificationException
-      String name = "Unrecognized " + cursorListCount;
-      printCursorList(cursorList, name);
+   int cursorListCount = 0;
+   for (ArrayList<TuioCursor> cursorList : tempUnrecognizedGestures) {
+     String name = "Unrecognized " + cursorListCount;
+     printCursorList(cursorList, name);
   
       cursorListCount++;
       infotext += "    " + name + "\n";
-    }
+   }
   
     infotext += "Uncertain gestures:\n";
-    for (Gesture gesture : touchManager.uncertainGestures) { // TODO: ConcurrentModificationException
+    for (Gesture gesture : tempUncertainGestures) {
       String name = gesture.getClass().getSimpleName();
       printCursorList(gesture.getCursors(), name);
       infotext += "    " + name + "\n";
     }
   
     infotext += "Active gestures:\n";
-    for (Gesture gesture : touchManager.activeGestures) {
+    for (Gesture gesture : tempActiveGestures) {
       String name = gesture.getClass().getSimpleName();
       printCursorList(gesture.getCursors(), name);
       infotext += "    " + name + "\n";
@@ -115,7 +118,7 @@ void draw()
       fill(0);
       text( infotext, (scale_factor), (15*scale_factor));
       text("Framerate  : " + frameRate, (5*scale_factor), height-(50*scale_factor));
-      text("Intensity: " + round(mapManager.brushIntensityPrecise), (5*scale_factor), height-(30*scale_factor));      
+      text("Intensity: " + mapManager.brushIntensity, (5*scale_factor), height-(30*scale_factor));      
       text("Radius: " + mapManager.brushRadius, (5*scale_factor), height-(10*scale_factor));
   }
   
