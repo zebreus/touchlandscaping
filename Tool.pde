@@ -1,0 +1,6 @@
+enum Tool {
+  RAISE_TERRAIN,
+  LOWER_TERRAIN,
+  BLUR_TERRAIN,
+  SPECIAL
+}
