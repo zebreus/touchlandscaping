@@ -1,4 +1,4 @@
-import de.voidplus.dollar.*;
+import de.voidplus.dollar.*; //<>//
 import development.*;
 
 import TUIO.*;
@@ -9,11 +9,25 @@ import java.util.List;
 import java.util.Random;
 
 
-// these are some helper variables which are use
-float cursor_size = 15;
-float object_size = 60;
-float table_size = 760;
-float scale_factor = 1;
+// Settings
+//Debug cursor width in mm
+float cursor_size = 10;
+// Touchfield aspekt ratio should be identical to screen aspect ratio
+// Touchfield width in mm
+float touchfield_width = 175;
+// Screen width in mm
+float screen_width = 440;
+// Draw debug overlay
+boolean doDebugOverlay = true;
+// Generate verbose output
+boolean verbose = false;
+
+// Helper variables, will be set in setup
+// A general scaling factor defined width/table_width
+float scale_factor;
+// Pixel width in mm table_width/width
+float pixel_width;
+
 PFont font;
 OneDollar one;
 
@@ -21,10 +35,6 @@ TuioProcessing tuioClient;
 
 TouchManager touchManager = new TouchManager();
 MapManager mapManager;
-
-boolean doDebugOverlay = true;
-boolean verbose = false;
-boolean callback = false;
 
 PGraphics mapImage;
 PGraphics ringImage;
@@ -42,7 +52,8 @@ void setup()
   frameRate(60);
 
   font = createFont("Arial", 12);
-  scale_factor = height/table_size;
+  scale_factor = width/screen_width;
+  pixel_width = screen_width/width;
 
   tuioClient  = new TuioProcessing(this);
   mapManager = new MapManager();
