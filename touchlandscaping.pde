@@ -9,24 +9,9 @@ import java.util.List;
 import java.util.Random;
 
 
-// Settings
+// Settings now in settings.pde
 //Debug cursor width in mm
 float cursor_size = 10;
-// Touchfield aspekt ratio should be identical to screen aspect ratio
-// Touchfield width in mm
-float touchfield_width = 175;
-// Screen width in mm
-float screen_width = 440;
-// Draw debug overlay
-boolean doDebugOverlay = true;
-// Generate verbose output
-boolean verbose = false;
-
-// Helper variables, will be set in setup
-// A general scaling factor defined width/table_width
-float scale_factor;
-// Pixel width in mm table_width/width
-float pixel_width;
 
 PFont font;
 OneDollar one;
@@ -52,14 +37,15 @@ void setup()
   frameRate(60);
 
   font = createFont("Arial", 12);
-  scale_factor = width/screen_width;
-  pixel_width = screen_width/width;
+ //<>//
+  setupSettings();
 
   tuioClient  = new TuioProcessing(this);
   mapManager = new MapManager();
   mapImage = createGraphics(width, height);
   ringImage = createGraphics(width, height);
   loadButtons();
+
 
   mapManager.drawFullMapToImage();
 
@@ -121,12 +107,12 @@ void draw()
       infotext += "    " + name + "\n";
     }
 
-    textFont(font, 12*scale_factor);
+    textFont(font, 12*screen_scale_factor);
     fill(0);
-    text( infotext, (scale_factor), (15*scale_factor));
-    text("Framerate  : " + frameRate, (5*scale_factor), height-(50*scale_factor));
-    text("Intensity: " + mapManager.brushIntensity, (5*scale_factor), height-(30*scale_factor));      
-    text("Radius: " + mapManager.brushRadius, (5*scale_factor), height-(10*scale_factor));
+    text( infotext, (screen_scale_factor), (15*screen_scale_factor));
+    text("Framerate  : " + frameRate, (5*screen_scale_factor), height-(50*screen_scale_factor));
+    text("Intensity: " + mapManager.brushIntensity, (5*screen_scale_factor), height-(30*screen_scale_factor));      
+    text("Radius: " + mapManager.brushRadius, (5*screen_scale_factor), height-(10*screen_scale_factor));
   }
 
   touchManager.update();
@@ -154,7 +140,7 @@ void printCursor(TuioCursor cursor, String name, color col) {
 }
 void printCursor(TuioCursor cursor, String name, color col, int number) {
   ArrayList<TuioPoint> pointList = cursor.getPath();
-  float cur_size = cursor_size*scale_factor; 
+  float cur_size = cursor_size*screen_scale_factor; 
 
   if (pointList.size()>0) {
     stroke(lerpColor(col, 0, 0.5));
@@ -170,14 +156,15 @@ void printCursor(TuioCursor cursor, String name, color col, int number) {
     ellipse( cursor.getScreenX(width), cursor.getScreenY(height), cur_size, cur_size);
     stroke(#FFFFFF);
     fill(0);
-    text(""+ number, cursor.getScreenX(width)-(5*scale_factor), cursor.getScreenY(height)+(5*scale_factor));
-    text(name, cursor.getScreenX(width)+(5*scale_factor), cursor.getScreenY(height)-(5*scale_factor));
+    text(""+ number, cursor.getScreenX(width)-(5*screen_scale_factor), cursor.getScreenY(height)+(5*screen_scale_factor));
+    text(name, cursor.getScreenX(width)+(5*screen_scale_factor), cursor.getScreenY(height)-(5*screen_scale_factor));
   }
 }
 
 void addTuioCursor(TuioCursor tcur) {
   if (verbose) println("add cur "+tcur.getCursorID()+" ("+tcur.getSessionID()+ ") " +tcur.getX()+" "+tcur.getY());
   touchManager.addCursor(tcur);
+
 }
 
 // called when a cursor is moved
