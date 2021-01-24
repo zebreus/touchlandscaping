@@ -8,9 +8,9 @@ public class ToolGesture extends Gesture {
   }
 
   public boolean update() {
-    
+
     mapManager.useTool(cursors.get(0).getPosition());
-    
+
     if (cursors.get(0).getTuioState() != TuioCursor.TUIO_REMOVED) {
       return true;
     } else {

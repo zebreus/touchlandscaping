@@ -1,5 +1,5 @@
 public class TouchManager {
-  
+
   float maxInitialGestureDistance = 0.5f;
 
   // When cursors are removed, they are
@@ -42,7 +42,7 @@ public class TouchManager {
   }
   public void removeCursor(TuioCursor cursor) {
   }
-  
+
   public void update() {
     //Evaluate gestures
     for (Iterator<Gesture> iterator = uncertainGestures.iterator(); iterator.hasNext(); ) {
