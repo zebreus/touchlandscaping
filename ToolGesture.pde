@@ -1,7 +1,7 @@
 public class ToolGesture extends Gesture {
   //The new point has to be older than minimumTime and younger than maximum time
-  TuioTime minAge = new TuioTime(1000);
-  TuioTime maxAge = new TuioTime(10000);
+  TuioTime minAge = new TuioTime(200);
+  TuioTime maxAge = new TuioTime(1500);
 
   public ToolGesture(ArrayList<TuioCursor> cursors) {
     super(cursors);
@@ -28,6 +28,11 @@ public class ToolGesture extends Gesture {
     TuioTime minStartTime = TuioTime.getSessionTime().subtract(maxAge);
     if (startTime.getTotalMilliseconds() <= maxStartTime.getTotalMilliseconds()) {
       if (startTime.getTotalMilliseconds() >= minStartTime.getTotalMilliseconds()) {
+        // Try to replicate missed Tool usages
+        // This causes a little lag, dependend on the amount of missed points
+        for(TuioPoint point : cursors.get(0).getPath()){
+          mapManager.useTool(point);
+        }
         return Gesture.MATCH;
       } else {
         return Gesture.NO_MATCH;
