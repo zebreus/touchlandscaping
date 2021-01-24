@@ -34,7 +34,7 @@ public class TouchManager {
 
     //TODO add gesture for all supported gestures
     uncertainGestures.add(new ToolGesture(newCursorList));
-    uncertainGestures.add(new PinchGesture(newCursorList));
+    uncertainGestures.add(new MenuGesture(newCursorList));
     uncertainGestures.add(new ScrollGesture(newCursorList));
   }
 
