@@ -188,53 +188,29 @@ public class MenuGesture extends Gesture {
   }
 
   public void drawMenu() {
-    int raiseButtonState = 0;
-    int lowerButtonState = 0;
-    int smoothButtonState = 0;
-    int specialButtonState = 0;
-
-    switch (mapManager.getTool()) {
-      case RAISE_TERRAIN:
-        raiseButtonState = 2;
-        break;
-  
-      case LOWER_TERRAIN:
-        lowerButtonState = 2;
-        break;
-  
-      case SMOOTH_TERRAIN:
-        smoothButtonState = 2;
-        break;
-  
-      case SPECIAL:
-        specialButtonState = 2;
-        break;
-  
-      default:
-        break;
-    }
-
     float menuDirection = (menuPosition.getAngleDegrees(menuCursor) - menuAngle + 360)%360;
     float menuDistance = getTouchDistance(menuCursor, menuPosition);
 
     if (menuDistance > menu_center_deadzone && menuDistance < menu_border_deadzone) {
       if (menuDirection > 0 && menuDirection < 40) {
-        specialButtonState = 1;
         selectedTool = Tool.SPECIAL;
       } else if (menuDirection > 40 && menuDirection < 90) {
-        smoothButtonState = 1;
         selectedTool = Tool.SMOOTH_TERRAIN;
       } else if (menuDirection > 90 && menuDirection < 140) {
-        lowerButtonState = 1;
         selectedTool = Tool.LOWER_TERRAIN;
       } else if (menuDirection > 140 && menuDirection < 180) {
-        raiseButtonState = 1;
         selectedTool = Tool.RAISE_TERRAIN;
       }
     } else {
       selectedTool = null;
     }
-    
+
+    Tool setTool = mapManager.getTool();
+    int raiseButtonState =   (selectedTool == Tool.RAISE_TERRAIN) ? 1 : (setTool == Tool.RAISE_TERRAIN) ? 2 : 0;
+    int lowerButtonState =   (selectedTool == Tool.LOWER_TERRAIN) ? 1 : (setTool == Tool.LOWER_TERRAIN) ? 2 : 0;
+    int smoothButtonState =  (selectedTool == Tool.SMOOTH_TERRAIN) ? 1 : (setTool == Tool.SMOOTH_TERRAIN) ? 2 : 0;
+    int specialButtonState = (selectedTool == Tool.SPECIAL) ? 1 : (setTool == Tool.SPECIAL) ? 2 : 0;
+
     image(buttons.get("Raise")[raiseButtonState], -250, -125);
     image(buttons.get("Lower")[lowerButtonState], -125, -250);
     image(buttons.get("Smooth")[smoothButtonState], +25, -250);
