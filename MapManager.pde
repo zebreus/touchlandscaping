@@ -35,13 +35,11 @@ class MapManager {
     ringImage.endDraw();
 
     mapImage.loadPixels();
-
     for (int row = 0; row < height; row++) {
       for (int col = 0; col < width; col++) {
         changePoint(col, row);
       }
     }
-
     mapImage.updatePixels();
 
     ringImage.loadPixels();
@@ -60,15 +58,16 @@ class MapManager {
     if (tool == Tool.SPECIAL) {
       one.draw();
       one.track(toolX, toolY);
+      
     } else {
 
       mapImage.loadPixels();
+      int[][] terrainHeightCopy = null;
 
       if (tool == Tool.SMOOTH_TERRAIN) {
 
-        int[][] terrainHeightCopy = terrainHeight;
-
-        int smoothingIntensity = max(1, (brushIntensity / 10));
+        terrainHeightCopy = terrainHeight;
+        int smoothingIntensity = max(1, floor(brushIntensity / 10));
 
         for (int row = 0; row < brushPixels.length; row++) {
           for (int col = 0; col < brushPixels[0].length; col++) {
@@ -86,6 +85,7 @@ class MapManager {
                   for (int j = -smoothingIntensity; j <= smoothingIntensity; j++) {
                     int coli = colCorrected + i;
                     int rowj = rowCorrected + j;
+                    
                     if (coli > 0 && rowj > 0 && coli < width && rowj < height) {
                       float weight = (float(smoothingIntensity - abs(i)) / float(smoothingIntensity * 2)) + (float(smoothingIntensity - abs(j)) / float(smoothingIntensity * 2));
                       avg += terrainHeight[rowj][coli] * weight;
@@ -99,20 +99,10 @@ class MapManager {
             }
           }
         }
-
-        for (int row = 0; row < brushPixels.length; row++) {
-          for (int col = 0; col < brushPixels[0].length; col++) {
-
-            int colCorrected = col + toolX - brushRadius;
-            int rowCorrected = row + toolY - brushRadius;
-
-            if (colCorrected > 0 && rowCorrected > 0 && colCorrected < width && rowCorrected < height) {
-              changePoint(colCorrected, rowCorrected, terrainHeightCopy[rowCorrected][colCorrected]);
-            }
-          }
-        }
-      } else if (tool == Tool.RAISE_TERRAIN || tool == Tool.LOWER_TERRAIN) {
-
+      }
+      
+      if (tool == Tool.RAISE_TERRAIN || tool == Tool.LOWER_TERRAIN || tool == Tool.SMOOTH_TERRAIN) {
+        
         for (int row = 0; row < brushPixels.length; row++) {
           for (int col = 0; col < brushPixels[0].length; col++) {
 
@@ -124,12 +114,13 @@ class MapManager {
                 changePoint(colCorrected, rowCorrected, constrain(terrainHeight[rowCorrected][colCorrected] + brushPixelsWithIntensity[row][col], 0, 500));
               } else if (tool == Tool.LOWER_TERRAIN) {
                 changePoint(colCorrected, rowCorrected, constrain(terrainHeight[rowCorrected][colCorrected] - brushPixelsWithIntensity[row][col], 0, 500));
+              } else if (tool == Tool.SMOOTH_TERRAIN && terrainHeightCopy != null) {
+                changePoint(colCorrected, rowCorrected, terrainHeightCopy[rowCorrected][colCorrected]);
               }
             }
           }
         }
       }
-
       mapImage.updatePixels();
 
       ringImage.loadPixels();
@@ -225,12 +216,6 @@ class MapManager {
 
   boolean isPointEdge(int col, int row) {
     float sum = 0;
-
-    //for (int ky = -1; ky <= 1; ky++) {
-    //  for (int kx = -1; kx <= 1; kx++) {
-    //    sum += int(terrainHeight[row+ky][col+kx] / stepFactor) * edgeKernel[ky+1][kx+1];
-    //  }
-    //}
 
     sum += int(terrainHeight[row-1][col-1] / (stepFactor * stepsPerLine));
     sum += int(terrainHeight[row][col-1] / (stepFactor * stepsPerLine));
