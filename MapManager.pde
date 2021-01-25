@@ -58,7 +58,6 @@ class MapManager {
     if (tool == Tool.SPECIAL) {
       one.draw();
       one.track(toolX, toolY);
-      
     } else {
 
       mapImage.loadPixels();
@@ -85,7 +84,7 @@ class MapManager {
                   for (int j = -smoothingIntensity; j <= smoothingIntensity; j++) {
                     int coli = colCorrected + i;
                     int rowj = rowCorrected + j;
-                    
+
                     if (coli > 0 && rowj > 0 && coli < width && rowj < height) {
                       float weight = (float(smoothingIntensity - abs(i)) / float(smoothingIntensity * 2)) + (float(smoothingIntensity - abs(j)) / float(smoothingIntensity * 2));
                       avg += terrainHeight[rowj][coli] * weight;
@@ -100,9 +99,9 @@ class MapManager {
           }
         }
       }
-      
+
       if (tool == Tool.RAISE_TERRAIN || tool == Tool.LOWER_TERRAIN || tool == Tool.SMOOTH_TERRAIN) {
-        
+
         for (int row = 0; row < brushPixels.length; row++) {
           for (int col = 0; col < brushPixels[0].length; col++) {
 
@@ -111,9 +110,9 @@ class MapManager {
 
             if (colCorrected > 0 && rowCorrected > 0 && colCorrected < width && rowCorrected < height) {
               if (tool == Tool.RAISE_TERRAIN) {
-                changePoint(colCorrected, rowCorrected, constrain(terrainHeight[rowCorrected][colCorrected] + brushPixelsWithIntensity[row][col], 0, 500));
+                changePoint(colCorrected, rowCorrected, constrain(terrainHeight[rowCorrected][colCorrected] + brushPixelsWithIntensity[row][col], -500, 1000));
               } else if (tool == Tool.LOWER_TERRAIN) {
-                changePoint(colCorrected, rowCorrected, constrain(terrainHeight[rowCorrected][colCorrected] - brushPixelsWithIntensity[row][col], 0, 500));
+                changePoint(colCorrected, rowCorrected, constrain(terrainHeight[rowCorrected][colCorrected] - brushPixelsWithIntensity[row][col], -500, 1000));
               } else if (tool == Tool.SMOOTH_TERRAIN && terrainHeightCopy != null) {
                 changePoint(colCorrected, rowCorrected, terrainHeightCopy[rowCorrected][colCorrected]);
               }
@@ -140,7 +139,7 @@ class MapManager {
   void setTool(Tool newTool) {
     tool = newTool;
   }
-  
+
   Tool getTool() {
     return tool;
   }
@@ -201,7 +200,7 @@ class MapManager {
 
   void changePoint(int col, int row, int newValue) {
     terrainHeight[row][col] = newValue;
-    mapImage.pixels[row * mapImage.width + col] = heightColors[newValue];
+    mapImage.pixels[row * mapImage.width + col] = heightColors[constrain(newValue, 0, 500)];
   }
 
   void drawPointForLines(int col, int row) {
@@ -231,12 +230,37 @@ class MapManager {
 
   void initTerrainHeight() {
     terrainHeight = new int[height][width];
-    float noiseStep = 0.01;
+    float noiseStep = 0.008; // FROM max ~0.03 Small detailled 'rocks'
+    float noiseStepBaseHeight = 0.003; // TO min ~0.005 Large 'plains'
 
     for (int row = 0; row < height; row++) {
       for (int col = 0; col < width; col++) {
-        // TODO: some more interesting initialization with noise or something
-        terrainHeight[row][col] = round(noise(noiseStep * col, noiseStep * row) * 500);
+        int noiseBaseHeight = round(noise(noiseStepBaseHeight * col, noiseStepBaseHeight * row) * 200);
+        terrainHeight[row][col] = round(noise(noiseStep * col, noiseStep * row) * 1100) - 250 - noiseBaseHeight;
+      }
+    }
+
+    // TODO: Combine this smoothing step with the brush code, they are too similar!
+    for (int row = 1; row < height; row++) {
+      for (int col = 1; col < width; col++) {
+        float avg = 0;
+        float smoothingDivider = 0;
+        int smoothingIntensityFull = 2;
+
+        for (int i = -smoothingIntensityFull; i <= smoothingIntensityFull; i++) {
+          for (int j = -smoothingIntensityFull; j <= smoothingIntensityFull; j++) {
+            int coli = col + i;
+            int rowj = row + j;
+
+            if (coli > 0 && rowj > 0 && coli < width && rowj < height) {
+              float weight = (float(smoothingIntensityFull - abs(i)) / float(smoothingIntensityFull * 2)) + (float(smoothingIntensityFull - abs(j)) / float(smoothingIntensityFull * 2));
+              avg += terrainHeight[rowj][coli] * weight;
+              smoothingDivider += weight;
+            }
+          }
+        }
+        avg = avg / smoothingDivider;
+        terrainHeight[row][col] = round(avg);
       }
     }
   }
