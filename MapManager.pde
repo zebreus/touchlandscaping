@@ -10,8 +10,8 @@ class MapManager {
   int brushIntensity = 20;
   int brushIntensityCache = brushIntensity;
 
-  int stepFactor = 20;
-  int stepsPerLine = 1;
+  int stepFactor = 20;  // -> 500 / stepFactor = Number of distinct colors
+  int stepsPerLine = 1; // Controlls how many colors are inbetween lines
 
   float[][] brushPixels;
   int[][] brushPixelsWithIntensity;
@@ -35,19 +35,14 @@ class MapManager {
     ringImage.endDraw();
 
     mapImage.loadPixels();
-    for (int row = 0; row < height; row++) {
-      for (int col = 0; col < width; col++) {
-        changePoint(col, row);
-      }
-    }
-    mapImage.updatePixels();
-
     ringImage.loadPixels();
     for (int row = 0; row < height; row++) {
       for (int col = 0; col < width; col++) {
+        changePoint(col, row);
         drawPointForLines(col, row);
       }
     }
+    mapImage.updatePixels();
     ringImage.updatePixels();
   }
 
@@ -221,11 +216,46 @@ class MapManager {
     sum += int(terrainHeight[row-1][col] / (stepFactor * stepsPerLine));
     sum += int(terrainHeight[row][col] / (stepFactor * stepsPerLine)) * -3;
 
-
     if (sum != 0) {
       return true;
     }
     return false;
+  }
+
+  void drawLegendKeyImage() {
+    legendKeyImage.beginDraw();
+
+    // TODO: put this in settings and name it in a useful way...
+    legendKeyImage.stroke(color(80, 80, 80));
+    legendKeyImage.fill(color(130, 130, 130));
+    int legendWidth = 80;
+    int legendHeight = 520;
+    int marginBottomRight = 20;
+    int marginBox = (legendHeight - 500) / 2;
+    int marginBottomLines = marginBox + marginBottomRight;
+    int cornerRoundness = 9;
+
+    legendKeyImage.rect(width-legendWidth-marginBottomRight, height-legendHeight-marginBottomRight, 
+      legendWidth, legendHeight, cornerRoundness, cornerRoundness, cornerRoundness, cornerRoundness);
+
+    for (int h = 0; h < 500; h++) {
+      legendKeyImage.stroke(heightColors[h]);
+      legendKeyImage.line(width-legendWidth-marginBottomRight+10, height-marginBottomLines-h, width-10-marginBottomRight, height-marginBottomLines-h);
+
+      // Lines on legend key
+      if (h % stepFactor * stepsPerLine == 0) {
+        legendKeyImage.stroke(lineColor);
+        legendKeyImage.line(width-legendWidth-marginBottomRight+10, height-marginBottomLines-h, width-10-marginBottomRight, height-marginBottomLines-h);
+      }
+    }
+
+    legendKeyImage.stroke(color(80, 80, 80));
+    strokeWeight(4);
+    legendKeyImage.noFill();
+    legendKeyImage.rect(width-legendWidth-marginBottomRight+marginBox, height-legendHeight-marginBottomRight+marginBox, 
+      legendWidth-marginBox*2, legendHeight-marginBox*2, 1, 1, 1, 1);   
+
+    legendKeyImage.endDraw();
   }
 
   void initTerrainHeight() {

@@ -21,12 +21,13 @@ MapManager mapManager;
 
 PGraphics mapImage;
 PGraphics ringImage;
+PGraphics legendKeyImage;
 
 Map<String, PImage[]> buttons;
 
 void setup()
 {
-  size(1600, 1000);
+  size(1800, 950);
   noStroke();
   fill(0);
 
@@ -41,9 +42,11 @@ void setup()
 
   mapImage = createGraphics(width, height);
   ringImage = createGraphics(width, height);
+  legendKeyImage = createGraphics(width, height); // Full size with a lot of transparent parts to avoid having to place it correctly here 
   loadButtons();
 
   mapManager.drawFullMapToImage();
+  mapManager.drawLegendKeyImage();
 
   setupOneDollar();
 }
@@ -52,15 +55,16 @@ void draw()
 {
   image(mapImage, 0, 0); 
   image(ringImage, 0, 0); 
+  image(legendKeyImage, 0, 0);
 
-  printDebugOutput();
+  showDebugOutput();
   
   touchManager.update();
 }
 
 
 
-void printDebugOutput() {
+void showDebugOutput() {
   String infotext = "";
 
   if (doDebugOverlay) {
