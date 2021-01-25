@@ -18,11 +18,6 @@ class MapManager {
 
   Tool tool = Tool.RAISE_TERRAIN;
 
-  //float[][] edgeKernel = {
-  //  { -1, -1, -1}, 
-  //  { -1, 8, -1}, 
-  //  { -1, -1, -1}};
-
   MapManager() {  
     initTerrainHeight();
     initHeightColors();
@@ -69,7 +64,7 @@ class MapManager {
 
       mapImage.loadPixels();
 
-      if (tool == Tool.BLUR_TERRAIN) {
+      if (tool == Tool.SMOOTH_TERRAIN) {
 
         int[][] terrainHeightCopy = terrainHeight;
 
@@ -151,8 +146,12 @@ class MapManager {
     }
   }
 
-  void changeTool (Tool newTool) {
+  void setTool(Tool newTool) {
     tool = newTool;
+  }
+  
+  Tool getTool() {
+    return tool;
   }
 
   void cacheSizeIntensity() {

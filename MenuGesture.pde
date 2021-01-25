@@ -48,170 +48,196 @@ public class MenuGesture extends Gesture {
       println("wrong size");
       return Gesture.NO_MATCH;
     }
-    
+
     // Abort if one cursor is removed
     if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED || cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
       println("removed");
       return Gesture.NO_MATCH;
     }
-    
+
     float currentAngle = cursors.get(0).getAngleDegrees(cursors.get(1));
-    float currentDistance = getTouchDistance(cursors.get(0),cursors.get(1));
-    
+    float currentDistance = getTouchDistance(cursors.get(0), cursors.get(1));
+
     if (!initialized) {
       initialDistance = currentDistance;
       initialAngle = currentAngle;
       lastDistance = currentDistance;
       initialized = true;
-      if(initialDistance < minimum_distance || initialDistance > maximum_distance){
+      if (initialDistance < minimum_distance || initialDistance > maximum_distance) {
         println("initialDistance");
         return Gesture.NO_MATCH;
       }
     }
-    
+
     float travelledDistance =  abs(lastDistance) - abs(currentDistance);
     println(travelledDistance);
     lastDistance = currentDistance;
-    
-    if(abs(abs(currentAngle)-abs(initialAngle)) > angle_threshold){
+
+    if (abs(abs(currentAngle)-abs(initialAngle)) > angle_threshold) {
       println("angle");
       return Gesture.NO_MATCH;
     }
-    
-    if(currentDistance < (initialDistance - distance_threshold)){
+
+    if (currentDistance < (initialDistance - distance_threshold)) {
       println("match");
       detectDistance = currentDistance;
       return Gesture.MATCH;
     }
-    
-    if(travelledDistance < 0){
+
+    if (travelledDistance < 0) {
       reverseTravel += abs(travelledDistance);
     }
-    
-    if(reverseTravel > reverse_travle_threshold){
+
+    if (reverseTravel > reverse_travle_threshold) {
       println("reverse");
       return Gesture.NO_MATCH;
     }
-    
+
     return Gesture.UNCLEAR;
   }
 
   TuioPoint menuCursor;
-  
+
   TuioPoint menuPosition;
   float menuAngle = 0;
   float menuScale = 0;
 
   public boolean update() {
-    
-    
-    if( !menuOpened ){
+
+
+    if ( !menuOpened ) {
       if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED || cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
         return false;
       }
       float currentAngle = cursors.get(0).getAngleDegrees(cursors.get(1));
-      float currentDistance = getTouchDistance(cursors.get(0),cursors.get(1));
-      
-      if(move_menu || menuPosition == null || menuCursor == null){
-        menuPosition = getMiddle(cursors.get(0),cursors.get(1));
+      float currentDistance = getTouchDistance(cursors.get(0), cursors.get(1));
+
+      if (move_menu || menuPosition == null || menuCursor == null) {
+        menuPosition = getMiddle(cursors.get(0), cursors.get(1));
         menuCursor = menuPosition;
       }
-      if(rotate_menu){
+      if (rotate_menu) {
         menuAngle = currentAngle;
       }
       menuScale = 1-((currentDistance-inner_distance)/(detectDistance-inner_distance));
-      
-      if (currentDistance < inner_distance){
+
+      if (currentDistance < inner_distance) {
         menuOpened = true;
         menuScale = 1;
       }
-    }else{
+    } else {
       if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED && cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
-        if(selectedTool != null){
-          mapManager.changeTool(selectedTool);
+        if (selectedTool != null) {
+          mapManager.setTool(selectedTool);
         }
         return false;
       }
       if (cursors.get(0).getTuioState() != TuioCursor.TUIO_REMOVED && cursors.get(1).getTuioState() != TuioCursor.TUIO_REMOVED) {
-        menuCursor = getMiddle(cursors.get(0),cursors.get(1));
-      }else if(cursors.get(0).getTuioState() != TuioCursor.TUIO_REMOVED){
+        menuCursor = getMiddle(cursors.get(0), cursors.get(1));
+      } else if (cursors.get(0).getTuioState() != TuioCursor.TUIO_REMOVED) {
         menuCursor = cursors.get(0);
-      }else{
+      } else {
         menuCursor = cursors.get(1);
       }
-      
     }
-    
+
     //draw the menu
     pushMatrix();
     translate(menuPosition.getScreenX(width), menuPosition.getScreenY(height));
     scale(menuScale);
     drawArc();
-    
+
     rotate(-radians(menuAngle));
-    
+
     drawMenu();
-    
+
     //Hacky way to draw the menu again, but mirrored
     menuAngle += 180;
     rotate(radians(180));
     drawMenu();
     menuAngle -= 180;
-    
+
     popMatrix();
-    
+
     return true;
   }
-/*
+  /*
   public void getMenuDirection(){
-    if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED && cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
-      println("removed");
-      return Gesture.NO_MATCH;
+   if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED && cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
+   println("removed");
+   return Gesture.NO_MATCH;
+   }
+   }
+   */
+  public void drawArc() {
+    float menuDirection = -(menuPosition.getAngleDegrees(menuCursor) - 360)%360;
+    float menuDistance = getTouchDistance(menuCursor, menuPosition);
+    float half_width = 20;
+
+    int arc_size = (int)(menu_border_deadzone*(width/touchfield_width)*2);
+    int inner_arc_size = (int)(menu_center_deadzone*(width/touchfield_width)*2);
+
+    if (menuDistance > menu_center_deadzone && menuDistance < menu_border_deadzone) {
+      fill(color(0, 0, 50, 128));
+    } else {
+      fill(color(0, 0, 50, 80));
     }
-  }
-*/
-  public void drawArc(){
-      float menuDirection = -(menuPosition.getAngleDegrees(menuCursor) - 360)%360;
-      float menuDistance = getTouchDistance(menuCursor,menuPosition);
-      float half_width = 20;
-      
-      int arc_size = (int)(menu_border_deadzone*(width/touchfield_width)*2);
-      int inner_arc_size = (int)(menu_center_deadzone*(width/touchfield_width)*2);
-      
-      if(menuDistance > menu_center_deadzone && menuDistance < menu_border_deadzone){
-        fill(color(0,0,50,128));
-      }else{
-        fill(color(0,0,50,80));
-      }
-     
-      arc(0, 0, arc_size, arc_size, radians(menuDirection-half_width), radians(menuDirection+half_width));
-      arc(0, 0, inner_arc_size, inner_arc_size, radians(menuDirection+half_width), radians(menuDirection-half_width+360));
+
+    arc(0, 0, arc_size, arc_size, radians(menuDirection-half_width), radians(menuDirection+half_width));
+    arc(0, 0, inner_arc_size, inner_arc_size, radians(menuDirection+half_width), radians(menuDirection-half_width+360));
   }
 
-  public void drawMenu(){
-      image(buttons.get("Raise")[0], -250, -125);
-      image(buttons.get("Lower")[0], -125, -250);
-      image(buttons.get("Smooth")[0], +25, -250);
-      image(buttons.get("Special")[0], +150, -125);
-      float menuDirection = (menuPosition.getAngleDegrees(menuCursor) - menuAngle + 360)%360;
-      float menuDistance = getTouchDistance(menuCursor,menuPosition);
-      
-      if(menuDistance > menu_center_deadzone && menuDistance < menu_border_deadzone){
-        if (menuDirection > 0 && menuDirection < 40) {
-          image(buttons.get("Special")[1], +150, -125);
-          selectedTool = Tool.SPECIAL;
-        } else if (menuDirection > 40 && menuDirection < 90) {
-          image(buttons.get("Smooth")[1], +25, -250);
-          selectedTool = Tool.BLUR_TERRAIN;
-        } else if (menuDirection > 90 && menuDirection < 140) {
-          image(buttons.get("Lower")[1], -125, -250);
-          selectedTool = Tool.LOWER_TERRAIN;
-        } else if (menuDirection > 140 && menuDirection < 180) {
-          image(buttons.get("Raise")[1], -250, -125);
-          selectedTool = Tool.RAISE_TERRAIN;
-        }
-      }else{
-        selectedTool = null;
+  public void drawMenu() {
+    int raiseButtonState = 0;
+    int lowerButtonState = 0;
+    int smoothButtonState = 0;
+    int specialButtonState = 0;
+
+    switch (mapManager.getTool()) {
+      case RAISE_TERRAIN:
+        raiseButtonState = 2;
+        break;
+  
+      case LOWER_TERRAIN:
+        lowerButtonState = 2;
+        break;
+  
+      case SMOOTH_TERRAIN:
+        smoothButtonState = 2;
+        break;
+  
+      case SPECIAL:
+        specialButtonState = 2;
+        break;
+  
+      default:
+        break;
+    }
+
+    float menuDirection = (menuPosition.getAngleDegrees(menuCursor) - menuAngle + 360)%360;
+    float menuDistance = getTouchDistance(menuCursor, menuPosition);
+
+    if (menuDistance > menu_center_deadzone && menuDistance < menu_border_deadzone) {
+      if (menuDirection > 0 && menuDirection < 40) {
+        specialButtonState = 1;
+        selectedTool = Tool.SPECIAL;
+      } else if (menuDirection > 40 && menuDirection < 90) {
+        smoothButtonState = 1;
+        selectedTool = Tool.SMOOTH_TERRAIN;
+      } else if (menuDirection > 90 && menuDirection < 140) {
+        lowerButtonState = 1;
+        selectedTool = Tool.LOWER_TERRAIN;
+      } else if (menuDirection > 140 && menuDirection < 180) {
+        raiseButtonState = 1;
+        selectedTool = Tool.RAISE_TERRAIN;
       }
+    } else {
+      selectedTool = null;
+    }
+    
+    image(buttons.get("Raise")[raiseButtonState], -250, -125);
+    image(buttons.get("Lower")[lowerButtonState], -125, -250);
+    image(buttons.get("Smooth")[smoothButtonState], +25, -250);
+    image(buttons.get("Special")[specialButtonState], +150, -125);
   }
 }

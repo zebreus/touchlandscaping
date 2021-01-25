@@ -17,6 +17,9 @@ float screen_pixel_width;
 // Screen height
 float screen_height;
 
+// Default font
+PFont font;
+
 // Get distance between two Points in mm on touchfield
 float getTouchDistance(TuioPoint a, TuioPoint b){
   return dist(a.getX()*touchfield_width, a.getY()*touchfield_height, b.getX()*touchfield_width, b.getY()*touchfield_height);
@@ -45,4 +48,34 @@ void setupSettings(){
   if(touchfield_height == 0.0){
     touchfield_height = touchfield_width*((float)height/ (float)width);
   }
+  font = createFont("Arial", 12);
+}
+
+// Loads button images to easily access when menue is called
+void loadButtons() {
+  buttons = new HashMap<String, PImage[]>();
+
+  PImage[] buttonArray = new PImage[3];
+  buttonArray[0] = loadImage("Buttons_Raise_1.png");
+  buttonArray[1] = loadImage("Buttons_Raise_2.png");
+  buttonArray[2] = loadImage("Buttons_Raise_3.png");
+  buttons.put("Raise", buttonArray);
+
+  buttonArray = new PImage[3];  
+  buttonArray[0] = loadImage("Buttons_Lower_1.png");
+  buttonArray[1] = loadImage("Buttons_Lower_2.png");
+  buttonArray[2] = loadImage("Buttons_Lower_3.png");
+  buttons.put("Lower", buttonArray);
+
+  buttonArray = new PImage[3];
+  buttonArray[0] = loadImage("Buttons_Smooth_1.png");
+  buttonArray[1] = loadImage("Buttons_Smooth_2.png");
+  buttonArray[2] = loadImage("Buttons_Smooth_3.png");
+  buttons.put("Smooth", buttonArray);
+
+  buttonArray = new PImage[3];
+  buttonArray[0] = loadImage("Buttons_Special_1.png");
+  buttonArray[1] = loadImage("Buttons_Special_2.png");
+  buttonArray[2] = loadImage("Buttons_Special_3.png");
+  buttons.put("Special", buttonArray);
 }
