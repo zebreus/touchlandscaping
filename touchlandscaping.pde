@@ -20,14 +20,22 @@ TouchManager touchManager;
 MapManager mapManager;
 
 PGraphics mapImage;
-PGraphics ringImage;
 
 Map<String, PImage[]> buttons;
 
+void settings(){
+  System.setProperty("jogl.disable.openglcore", "false");
+
+  //noCursor();
+  size(1600, 1000, P2D);
+  
+}
+
 void setup()
 {
-  size(1600, 1000);
-  noStroke();
+  mapImage = createGraphics(width, height, P2D);
+
+  //noStroke();
   fill(0);
 
   loop();
@@ -39,8 +47,7 @@ void setup()
   touchManager = new TouchManager();
   mapManager = new MapManager();
 
-  mapImage = createGraphics(width, height);
-  ringImage = createGraphics(width, height);
+  
   loadButtons();
 
   mapManager.drawFullMapToImage();
@@ -49,13 +56,13 @@ void setup()
 }
 
 void draw()
-{
-  image(mapImage, 0, 0); 
-  image(ringImage, 0, 0); 
+{ //<>//
+  mapManager.drawMap();
 
   printDebugOutput();
-  
+
   touchManager.update();
+  println(frameRate);
 }
 
 

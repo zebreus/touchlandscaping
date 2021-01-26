@@ -17,10 +17,12 @@ class MapManager {
   int[][] brushPixelsWithIntensity;
 
   Tool tool = Tool.RAISE_TERRAIN;
+  
+  PShader mapShader;
 
   MapManager() {  
     initTerrainHeight();
-    initHeightColors();
+    prepareMapShader();
     calcBrush(brushRadius);
   }
 
@@ -30,10 +32,6 @@ class MapManager {
     mapImage.rect(0, 0, width, height);
     mapImage.endDraw();
 
-    ringImage.beginDraw();
-    ringImage.rect(0, 0, width, height);
-    ringImage.endDraw();
-
     mapImage.loadPixels();
     for (int row = 0; row < height; row++) {
       for (int col = 0; col < width; col++) {
@@ -41,24 +39,13 @@ class MapManager {
       }
     }
     mapImage.updatePixels();
-
-    ringImage.loadPixels();
-    for (int row = 0; row < height; row++) {
-      for (int col = 0; col < width; col++) {
-        drawPointForLines(col, row);
-      }
-    }
-    ringImage.updatePixels();
   }
 
   void useTool(TuioPoint toolPosition) {
     int toolX = round(toolPosition.getX()*width); 
     int toolY = round(toolPosition.getY()*height); 
 
-    if (tool == Tool.SPECIAL) {
-      one.draw();
-      one.track(toolX, toolY);
-    } else {
+    {
 
       mapImage.loadPixels();
       int[][] terrainHeightCopy = null;
@@ -121,18 +108,6 @@ class MapManager {
         }
       }
       mapImage.updatePixels();
-
-      ringImage.loadPixels();
-      for (int row = 0; row < brushPixels.length; row++) {
-        for (int col = 0; col < brushPixels[0].length; col++) {
-
-          int colCorrected = col + toolX - brushRadius;
-          int rowCorrected = row + toolY - brushRadius;
-
-          drawPointForLines(colCorrected, rowCorrected);
-        }
-      }
-      ringImage.updatePixels();
     }
   }
 
@@ -200,32 +175,7 @@ class MapManager {
 
   void changePoint(int col, int row, int newValue) {
     terrainHeight[row][col] = newValue;
-    mapImage.pixels[row * mapImage.width + col] = heightColors[constrain(newValue, 0, 500)];
-  }
-
-  void drawPointForLines(int col, int row) {
-    if (col > 0 && row > 0 && col < width && row < height) {
-      if (isPointEdge(col, row)) {
-        ringImage.pixels[row * mapImage.width + col] = lineColor;
-      } else {
-        ringImage.pixels[row * mapImage.width + col] = transparentColor;
-      }
-    }
-  }
-
-  boolean isPointEdge(int col, int row) {
-    float sum = 0;
-
-    sum += int(terrainHeight[row-1][col-1] / (stepFactor * stepsPerLine));
-    sum += int(terrainHeight[row][col-1] / (stepFactor * stepsPerLine));
-    sum += int(terrainHeight[row-1][col] / (stepFactor * stepsPerLine));
-    sum += int(terrainHeight[row][col] / (stepFactor * stepsPerLine)) * -3;
-
-
-    if (sum != 0) {
-      return true;
-    }
-    return false;
+    mapImage.pixels[row * mapImage.width + col] = color(newValue/4);
   }
 
   void initTerrainHeight() {
@@ -263,40 +213,108 @@ class MapManager {
         terrainHeight[row][col] = round(avg);
       }
     }
+    
+    // Clean values
+    int min = 99999;
+    for (int row = 0; row < height; row++) {
+      for (int col = 0; col < width; col++) {
+        if(terrainHeight[row][col]<min){
+          min = terrainHeight[row][col];
+        }
+      }
+    }
+    //Remove negative values and cap at 1023
+    //TODO It would probably be a really good idea to store the height as a float between 0 and 1
+    for (int row = 0; row < height; row++) {
+      for (int col = 0; col < width; col++) {
+        terrainHeight[row][col] -= min;
+        if(terrainHeight[row][col] > 1023){
+          terrainHeight[row][col] = 1023;
+        }
+      }
+    }
+  }
+  
+  void drawMap(){
+    // For some reason only updated points get redrawn and shaded, this can probably be optimized by a lot
+    //TODO optimize
+    for(int h = 0; h < height ; h++){
+    for(int w = 0; w < width ; w++){
+      changePoint(w,h);
+    }
+    }
+
+    shader(mapShader);
+    image(mapImage, 0, 0);
+    resetShader();
   }
 
-  void initHeightColors() {
-    heightColors[0] = color(50, 120, 200);
-    heightColors[100] = color(150, 200, 255);
-    heightColors[200] = color(150, 190, 140);
-    heightColors[300] = color(240, 240, 190);
-    heightColors[400] = color(170, 135, 80);
-    heightColors[500] = color(230, 230, 220);
-
-    // TODO: How would a color gradient be better programmed?
-    for (int i = 0; i < 100; i++) {
-      int imod = int(i / stepFactor);
-      heightColors[i] = lerpColor(heightColors[0], heightColors[100], float(imod)/(100/stepFactor));
+  PImage generateColorTexture(color[] colors, float[] positions) throws Exception{
+    if(colors.length != positions.length){
+      throw new Exception("NOPE");
     }
-
-    for (int i = 100; i < 200; i++) {
-      int imod = int(i / stepFactor);
-      heightColors[i] = lerpColor(heightColors[100], heightColors[200], float(imod-(100/stepFactor))/(100/stepFactor));
+    
+    // Has to start with 0
+    if(positions[0] != 0.0){
+      throw new Exception("NOPE");
     }
-
-    for (int i = 200; i < 300; i++) {
-      int imod = int(i / stepFactor);
-      heightColors[i] = lerpColor(heightColors[200], heightColors[300], float(imod-(200/stepFactor))/(100/stepFactor));
+    
+    // Has to end with 1
+    if(positions[positions.length-1] != 1.0){
+      throw new Exception("NOPE");
     }
-
-    for (int i = 300; i < 400; i++) {
-      int imod = int(i / stepFactor);
-      heightColors[i] = lerpColor(heightColors[300], heightColors[400], float(imod-(300/stepFactor))/(100/stepFactor));
+    
+    // Positions need to increase
+    for(int testPos = 1; testPos < positions.length; testPos++){
+      if(positions[testPos] <= positions[testPos-1]){
+        throw new Exception("NOPE");
+      }
     }
-
-    for (int i = 400; i < 500; i++) {
-      int imod = int(i / stepFactor);
-      heightColors[i] = lerpColor(heightColors[400], heightColors[500], float(imod-(400/stepFactor))/(100/stepFactor));
+    
+    PGraphics g = createGraphics(255,1);
+    g.beginDraw();
+    
+    for(int step = 1; step < positions.length ; step++){
+      
+      for(int pos = int(positions[step-1]*255f) ; pos < positions[step]*255 ; pos++){
+        // This has a lot of potential for improvment, but it is only excuted once
+        g.stroke(g.lerpColor(colors[step-1],colors[step], float(pos-int(positions[step-1]*255f))/float(int(positions[step]*255f)-int(positions[step-1]*255f)) ));
+        g.point(pos,0);
+      }
     }
+    g.endDraw();
+    return g.get(0,0,255,1);
+  }
+
+  void prepareMapShader() {
+    color[] colors = new color[6]; //<>//
+    colors[0] = color(50, 120, 200);
+    colors[1] = color(150, 200, 255);
+    colors[2] = color(150, 190, 140);
+    colors[3] = color(240, 240, 190);
+    colors[4] = color(170, 135, 80);
+    colors[5] = color(230, 230, 220);
+
+    float[] positions = new float[6];
+    positions[0] = 0f;
+    positions[1] = 0.2f;
+    positions[2] = 0.4f;
+    positions[3] = 0.6f;
+    positions[4] = 0.8f;
+    positions[5] = 1f;
+    
+    PImage colorTexture;
+    try{
+      colorTexture = generateColorTexture(colors, positions);
+    }catch(Exception e){
+      println("EXCEPTION: " + e);
+      return;
+    }
+    
+    mapShader = loadShader("mapshader.glsl");
+    mapShader.set("steps", 15);
+    mapShader.set("shadingIntensity", 15);
+    mapShader.set("lineIntensity", 0.4f);
+    mapShader.set("colorTexture",colorTexture);
   }
 }
