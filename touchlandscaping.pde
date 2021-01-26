@@ -1,4 +1,4 @@
-import de.voidplus.dollar.*; //<>// //<>//
+import de.voidplus.dollar.*;
 import development.*;
 
 import TUIO.*;
@@ -20,6 +20,7 @@ TouchManager touchManager;
 MapManager mapManager;
 
 PGraphics mapImage;
+PGraphics legendKeyImage;
 
 Map<String, PImage[]> buttons;
 
@@ -34,8 +35,8 @@ void settings(){
 void setup()
 {
   mapImage = createGraphics(width, height, P2D);
+  legendKeyImage = createGraphics(width, height, P2D); // Full size with a lot of transparent parts to avoid having to place it correctly here 
 
-  //noStroke();
   fill(0);
 
   loop();
@@ -47,19 +48,21 @@ void setup()
   touchManager = new TouchManager();
   mapManager = new MapManager();
 
-  
   loadButtons();
 
   mapManager.drawFullMapToImage();
+  mapManager.drawLegendKeyImage();
 
   setupOneDollar();
 }
 
 void draw()
-{ //<>//
+{
   mapManager.drawMap();
 
-  printDebugOutput();
+  image(legendKeyImage, 0, 0);
+
+  showDebugOutput();
 
   touchManager.update();
   println(frameRate);
@@ -67,7 +70,7 @@ void draw()
 
 
 
-void printDebugOutput() {
+void showDebugOutput() {
   String infotext = "";
 
   if (doDebugOverlay) {
