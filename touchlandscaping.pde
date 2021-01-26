@@ -1,4 +1,4 @@
-import de.voidplus.dollar.*;
+import de.voidplus.dollar.*; //<>//
 import development.*;
 
 import TUIO.*;
@@ -34,6 +34,7 @@ void settings(){
 
 void setup()
 {
+  surface.setTitle("Xtreme Touchlandscaping deluxe++");
   mapImage = createGraphics(width, height, P2D);
   legendKeyImage = createGraphics(width, height, P2D); // Full size with a lot of transparent parts to avoid having to place it correctly here 
 
@@ -55,7 +56,7 @@ void setup()
 
   setupOneDollar();
 }
-
+ //<>//
 void draw()
 {
   mapManager.drawMap();
