@@ -1,5 +1,7 @@
 # Xtreme Touchlandscaping deluxe++
 
+![Fancy logo](client/logo.gif)
+
 ## Done
  * Berührungen bündeln
  * Dynamische Gesten
