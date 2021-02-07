@@ -20,7 +20,7 @@ TouchManager touchManager;
 MapManager mapManager;
 
 PGraphics mapImage;
-PGraphics legendKeyImage;
+
 
 Map<String, PImage[]> buttons;
 
@@ -36,7 +36,6 @@ void setup()
 {
   surface.setTitle("Xtreme Touchlandscaping deluxe++");
   mapImage = createGraphics(width, height, P2D);
-  legendKeyImage = createGraphics(width, height, P2D); // Full size with a lot of transparent parts to avoid having to place it correctly here 
 
   fill(0);
 
@@ -52,7 +51,6 @@ void setup()
   loadButtons();
 
   mapManager.drawFullMapToImage();
-  mapManager.drawLegendKeyImage();
 
   setupOneDollar();
 }
@@ -60,8 +58,6 @@ void setup()
 void draw()
 {
   mapManager.drawMap();
-
-  image(legendKeyImage, 0, 0);
 
   showDebugOutput();
 

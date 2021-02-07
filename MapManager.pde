@@ -10,20 +10,36 @@ class MapManager {
   int brushIntensity = 20;
   int brushIntensityCache = brushIntensity;
 
-  //These are obsolete
-  int stepFactor = 20;  // -> 500 / stepFactor = Number of distinct colors
-  int stepsPerLine = 1; // Controlls how many colors are inbetween lines
+
+  // Relevant for the legend markings
+  // The height of the lowest possible point in meters
+  int lowestElevation = -4250;
+  // The height of the highest possible point in meters
+  int elevationRange = 8500;
+
+  // Legend dimensions
+  int legendWidth = 160;
+  int legendHeight = 600;
+  int legendSideMargin = 10;
+  int legendTopMargin = 10;
+  float legendTextPart = 0.40;
+
 
   float[][] brushPixels;
   int[][] brushPixelsWithIntensity;
 
   Tool tool = Tool.RAISE_TERRAIN;
-  
+
   PShader mapShader;
+
+  int steps = 34;
+  PImage colorTexture;
+  PImage legendImage;
 
   MapManager() {  
     initTerrainHeight();
     prepareMapShader();
+    prepareLegendKeyImage();
     calcBrush(brushRadius);
   }
 
@@ -179,40 +195,72 @@ class MapManager {
     mapImage.pixels[row * mapImage.width + col] = color(newValue/4);
   }
 
-  void drawLegendKeyImage() {
-    legendKeyImage.beginDraw();
-
-    // TODO: put this in settings and name it in a useful way...
-    legendKeyImage.stroke(color(80, 80, 80));
-    legendKeyImage.fill(color(130, 130, 130));
-    int legendWidth = 80;
-    int legendHeight = 520;
-    int marginBottomRight = 20;
-    int marginBox = (legendHeight - 500) / 2;
-    int marginBottomLines = marginBox + marginBottomRight;
-    int cornerRoundness = 9;
-
-    legendKeyImage.rect(width-legendWidth-marginBottomRight, height-legendHeight-marginBottomRight, 
-      legendWidth, legendHeight, cornerRoundness, cornerRoundness, cornerRoundness, cornerRoundness);
-
-    for (int h = 0; h < 500; h++) {
-      legendKeyImage.stroke(heightColors[h]);
-      legendKeyImage.line(width-legendWidth-marginBottomRight+10, height-marginBottomLines-h, width-10-marginBottomRight, height-marginBottomLines-h);
-
-      // Lines on legend key
-      if (h % stepFactor * stepsPerLine == 0) {
-        legendKeyImage.stroke(lineColor);
-        legendKeyImage.line(width-legendWidth-marginBottomRight+10, height-marginBottomLines-h, width-10-marginBottomRight, height-marginBottomLines-h);
-      }
+  color getStepColor(int step) {
+    if (step < 0 || step > steps-1) {
+      return #000000 ;
     }
+    int pos = int((float(step)/float(steps))*255f);
+    return colorTexture.pixels[pos];
+  }
 
-    legendKeyImage.stroke(color(80, 80, 80));
-    strokeWeight(4);
-    legendKeyImage.noFill();
-    legendKeyImage.rect(width-legendWidth-marginBottomRight+marginBox, height-legendHeight-marginBottomRight+marginBox, 
-      legendWidth-marginBox*2, legendHeight-marginBox*2, 1, 1, 1, 1);   
+  int getStepElevation(int step) {
+    if (step < 0 || step > steps) {
+      return 0 ;
+    }
+    return lowestElevation+int(step*(float(elevationRange)/steps));
+  }
 
-    legendKeyImage.endDraw();
+  void drawLegendField(PGraphics g, int step, int width, int height) {
+    g.stroke(#000000);
+    g.fill(getStepColor(step));
+    g.rect(0, 0, width, height);
+  }
+
+  void drawLegendMeterMarking(PGraphics g, int step) {
+    g.fill(#000000);
+    g.textAlign(LEFT, CENTER);
+    g.text(getStepElevation(step)+"m", 0, 0);
+  }
+
+  void prepareLegendKeyImage() {
+    PGraphics g = createGraphics(legendWidth, legendHeight);
+    g.beginDraw();
+
+    // Some name values
+    int fieldHeight = (legendHeight-(legendTopMargin*2))/(steps+1);
+    int textWidth = int((legendWidth-(legendSideMargin*2))*legendTextPart);
+    int fieldWidth = (legendWidth-(legendSideMargin*2))-textWidth;
+
+    // Draw background
+    g.noStroke();
+    g.fill(255);
+    g.rect(0, 0, legendWidth, legendHeight, 9, 9, 9, 9);
+
+    //Prepare for contents
+    g.pushMatrix();
+    g.translate(legendSideMargin, legendTopMargin+(fieldHeight/2));
+
+    // Draw colored fields
+    g.pushMatrix();
+    g.translate(textWidth, 0);
+    for (int step = steps-1; step >= 0; step--) {
+      drawLegendField(g, step, fieldWidth, fieldHeight);
+      g.translate(0, fieldHeight);
+    }
+    g.popMatrix();
+
+    // Draw meter markings
+    g.pushMatrix();
+    g.translate(0, 0);
+    for (int step = steps; step >= 0; step--) {
+
+      drawLegendMeterMarking(g, step);
+      g.translate(0, fieldHeight);
+    }
+    g.popMatrix();
+
+    g.endDraw();
+    legendImage = g.get(0, 0, legendWidth, legendHeight);
   }
 
   void initTerrainHeight() {
@@ -250,12 +298,12 @@ class MapManager {
         terrainHeight[row][col] = round(avg);
       }
     }
-    
+
     // Clean values
     int min = 99999;
     for (int row = 0; row < height; row++) {
       for (int col = 0; col < width; col++) {
-        if(terrainHeight[row][col]<min){
+        if (terrainHeight[row][col]<min) {
           min = terrainHeight[row][col];
         }
       }
@@ -265,93 +313,100 @@ class MapManager {
     for (int row = 0; row < height; row++) {
       for (int col = 0; col < width; col++) {
         terrainHeight[row][col] -= min;
-        if(terrainHeight[row][col] > 1023){
+        if (terrainHeight[row][col] > 1023) {
           terrainHeight[row][col] = 1023;
         }
       }
     }
   }
-  
-  void drawMap(){
+
+  void drawMap() {
     // For some reason only updated points get redrawn and shaded, this can probably be optimized by a lot
     //TODO optimize
-    for(int h = 0; h < height ; h++){
-    for(int w = 0; w < width ; w++){
-      changePoint(w,h);
-    }
+    for (int h = 0; h < height; h++) {
+      for (int w = 0; w < width; w++) {
+        changePoint(w, h);
+      }
     }
 
+    pushMatrix();
     shader(mapShader);
     image(mapImage, 0, 0);
     resetShader();
+    popMatrix();
+    image(legendImage, 0, 0);
   }
 
-  PImage generateColorTexture(color[] colors, float[] positions) throws Exception{
-    if(colors.length != positions.length){
+  PImage generateColorTexture(color[] colors, float[] positions) throws Exception {
+    if (colors.length != positions.length) {
       throw new Exception("NOPE");
     }
-    
+
     // Has to start with 0
-    if(positions[0] != 0.0){
+    if (positions[0] != 0.0) {
       throw new Exception("NOPE");
     }
-    
+
     // Has to end with 1
-    if(positions[positions.length-1] != 1.0){
+    if (positions[positions.length-1] != 1.0) {
       throw new Exception("NOPE");
     }
-    
+
     // Positions need to increase
-    for(int testPos = 1; testPos < positions.length; testPos++){
-      if(positions[testPos] <= positions[testPos-1]){
+    for (int testPos = 1; testPos < positions.length; testPos++) {
+      if (positions[testPos] < positions[testPos-1]) {
         throw new Exception("NOPE");
       }
     }
-    
-    PGraphics g = createGraphics(255,1);
+
+    PGraphics g = createGraphics(255, 1);
     g.beginDraw();
-    
-    for(int step = 1; step < positions.length ; step++){
-      
-      for(int pos = int(positions[step-1]*255f) ; pos < positions[step]*255 ; pos++){
-        // This has a lot of potential for improvment, but it is only excuted once
-        g.stroke(g.lerpColor(colors[step-1],colors[step], float(pos-int(positions[step-1]*255f))/float(int(positions[step]*255f)-int(positions[step-1]*255f)) ));
-        g.point(pos,0);
+
+    for (int step = 1; step < positions.length; step++) {
+      for (int pos = int(positions[step-1]*255f); pos < positions[step]*255; pos++) {
+        g.noStroke();
+        g.fill(lerpColor(colors[step-1], colors[step], float(pos-int(positions[step-1]*255f))/float(int(positions[step]*255f)-int(positions[step-1]*255f)) ));
+        // Point does for some reason not paint the color accuratly, so rect is used
+        g.rect(pos, 0, 1, 1);
       }
     }
     g.endDraw();
-    return g.get(0,0,255,1);
+    return g.get(0, 0, 255, 1);
   }
 
   void prepareMapShader() {
-    color[] colors = new color[6]; //<>//
-    colors[0] = color(50, 120, 200);
-    colors[1] = color(150, 200, 255);
-    colors[2] = color(150, 190, 140);
-    colors[3] = color(240, 240, 190);
-    colors[4] = color(170, 135, 80);
-    colors[5] = color(230, 230, 220);
+    int steps = 34;
 
-    float[] positions = new float[6];
+    color[] colors = new color[7];
+    colors[0] = color(99, 159, 211);
+    colors[1] = color(227, 244, 254);
+    colors[2] = color(164, 217, 154);
+    colors[3] = color(129, 192, 116);
+    colors[4] = color(243, 240, 194);
+    colors[5] = color(194, 140, 33);
+    colors[6] = color(175, 91, 0);
+
+    float[] positions = new float[7];
     positions[0] = 0f;
-    positions[1] = 0.2f;
-    positions[2] = 0.4f;
-    positions[3] = 0.6f;
-    positions[4] = 0.8f;
-    positions[5] = 1f;
-    
-    PImage colorTexture;
-    try{
+    positions[1] = float((steps/2)-1)/steps;
+    positions[2] = 0.5f;
+    positions[3] = float((steps/2)+1)/steps;
+    positions[4] = 0.67f;
+    positions[5] = 0.9f;
+    positions[6] = 1f;
+
+    try {
       colorTexture = generateColorTexture(colors, positions);
-    }catch(Exception e){
+    }
+    catch(Exception e) {
       println("EXCEPTION: " + e);
       return;
     }
-    
+
     mapShader = loadShader("mapshader.glsl");
-    mapShader.set("steps", 15);
-    mapShader.set("shadingIntensity", 15);
-    mapShader.set("lineIntensity", 0.4f);
-    mapShader.set("colorTexture",colorTexture);
+    mapShader.set("steps", steps);
+    mapShader.set("shadingIntensity", 2);
+    mapShader.set("lineIntensity", 0.2f);
+    mapShader.set("colorTexture", colorTexture);
   }
 }
