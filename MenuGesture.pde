@@ -70,7 +70,6 @@ public class MenuGesture extends Gesture {
     }
 
     float travelledDistance =  abs(lastDistance) - abs(currentDistance);
-    println(travelledDistance);
     lastDistance = currentDistance;
 
     if (abs(abs(currentAngle)-abs(initialAngle)) > angle_threshold) {

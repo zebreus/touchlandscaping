@@ -7,9 +7,12 @@ class MapManager { //<>//
 
   // Brush radius in mm
   //TODO change brush radius actually to mm
-  float brushRadius = 50.0;
+  float brushSize = 50.0;
   // Brush intensity multiplier
   float brushIntensity = 1.0;
+  
+  // The maximum size the brush can be.
+  int max_brush_size = 500;
 
 
   // Relevant for the legend markings
@@ -25,9 +28,7 @@ class MapManager { //<>//
   int legendTopMargin = 10;
   float legendTextPart = 0.40;
 
-
-  float[][] brushPixels;
-  int[][] brushPixelsWithIntensity;
+  float[][] brush;
 
   Tool tool = Tool.RAISE_TERRAIN;
 
@@ -41,7 +42,7 @@ class MapManager { //<>//
     initTerrainHeight();
     prepareMapShader();
     prepareLegendKeyImage();
-    calcBrush(int(brushRadius));
+    prepareBrush();
   }
 
   void drawFullMapToImage() {
@@ -59,9 +60,16 @@ class MapManager { //<>//
     mapImage.updatePixels();
   }
 
+  // Get the brush value at the given coordinates of the brush.
+  // The input values are between 0 and brushSize
+  float brushAt(int x, int y){
+    float scalingFactor = float(max_brush_size)/brushSize;
+    return brush[int(scalingFactor*x)][int(scalingFactor*y)] * brushIntensity;
+  }
+/*
   void useTool(TuioPoint toolPosition) {
-    int toolX = round(toolPosition.getX()*width); 
-    int toolY = round(toolPosition.getY()*height); 
+    int toolX = round(toolPosition.getX()*width);
+    int toolY = round(toolPosition.getY()*height);
 
     {
 
@@ -73,13 +81,15 @@ class MapManager { //<>//
         terrainHeightCopy = terrainHeight;
         int smoothingIntensity = max(1, floor(brushIntensity / 10));
 
-        for (int row = 0; row < brushPixels.length; row++) {
-          for (int col = 0; col < brushPixels[0].length; col++) {
+        for (int row = 0; row < int(brushSize); row++) {
+          for (int col = 0; col < int(brushSize); col++) {
+            
+            //TODO ask kyrill how this works
+            //TODO adjust for static brush[][]
+            if (brush[row][col] != 0) {
 
-            if (brushPixels[row][col] != 0) {
-
-              int colCorrected = col + toolX - int(brushRadius);
-              int rowCorrected = row + toolY - int(brushRadius);
+              int colCorrected = col + toolX - int(brushSize);
+              int rowCorrected = row + toolY - int(brushSize);
 
               if (colCorrected > 0 && rowCorrected > 0 && colCorrected < width && rowCorrected < height) {
                 float avg = 0;
@@ -107,17 +117,17 @@ class MapManager { //<>//
 
       if (tool == Tool.RAISE_TERRAIN || tool == Tool.LOWER_TERRAIN || tool == Tool.SMOOTH_TERRAIN) {
 
-        for (int row = 0; row < brushPixels.length; row++) {
-          for (int col = 0; col < brushPixels[0].length; col++) {
+        for (int x = 0; x < int(brushSize); x++) {
+          for (int y = 0; y < int(brushSize); y++) {
 
-            int colCorrected = col + toolX - int(brushRadius);
-            int rowCorrected = row + toolY - int(brushRadius);
+            int colCorrected = x + toolX - int(brushSize/2);
+            int rowCorrected = y + toolY - int(brushSize/2);
 
             if (colCorrected > 0 && rowCorrected > 0 && colCorrected < width && rowCorrected < height) {
               if (tool == Tool.RAISE_TERRAIN) {
-                changePoint(colCorrected, rowCorrected, constrain(terrainHeight[rowCorrected][colCorrected] + brushPixelsWithIntensity[row][col], -500, 1000));
+                changePoint(colCorrected, rowCorrected, constrain(terrainHeight[rowCorrected][colCorrected] + int(brushAt(x,y)), -500, 1000));
               } else if (tool == Tool.LOWER_TERRAIN) {
-                changePoint(colCorrected, rowCorrected, constrain(terrainHeight[rowCorrected][colCorrected] - brushPixelsWithIntensity[row][col], -500, 1000));
+                changePoint(colCorrected, rowCorrected, constrain(terrainHeight[rowCorrected][colCorrected] - int(brushAt(x,y)), -500, 1000));
               } else if (tool == Tool.SMOOTH_TERRAIN && terrainHeightCopy != null) {
                 changePoint(colCorrected, rowCorrected, terrainHeightCopy[rowCorrected][colCorrected]);
               }
@@ -128,6 +138,35 @@ class MapManager { //<>//
       mapImage.updatePixels();
     }
   }
+*/
+
+    void useTool(TuioPoint toolPosition) {
+    int toolX = round(toolPosition.getX()*width);
+    int toolY = round(toolPosition.getY()*height);
+
+
+        for (int x = 0; x < int(brushSize); x++) {
+          for (int y = 0; y < int(brushSize); y++) {
+            float intensity = brushAt(x,y);
+            int colCorrected = x + toolX - int(brushSize/2);
+            int rowCorrected = y + toolY - int(brushSize/2);
+
+            if (colCorrected > 0 && rowCorrected > 0 && colCorrected < width && rowCorrected < height) {
+              switch(tool){
+              case RAISE_TERRAIN:
+                changePoint(colCorrected, rowCorrected, constrain(terrainHeight[rowCorrected][colCorrected] + int(intensity), -500, 1000));
+                break;
+              case LOWER_TERRAIN:
+                changePoint(colCorrected, rowCorrected, constrain(terrainHeight[rowCorrected][colCorrected] - int(intensity), -500, 1000));
+                break;
+              case SMOOTH_TERRAIN:
+              case SPECIAL:
+              }
+            }
+          }
+        }
+      mapImage.updatePixels();
+  }
 
   void setTool(Tool newTool) {
     tool = newTool;
@@ -137,38 +176,32 @@ class MapManager { //<>//
     return tool;
   }
 
-  void changeRadius (float relativeValue) {
-    if (relativeValue != 0) {
-      brushRadius = constrain(brushRadius + relativeValue, 1, 100);
-
-      calcBrush (int(brushRadius));
-    }
+  void changeBrushSize (float size) {
+    brushSize = constrain(brushSize + size, 10, max_brush_size);
   }
   
   //Return the brush radius in mm
-  float getBrushRadius () {
+  float getBrushSize () {
     //TODO rewrite the brush system
     //return brushPixels.length/2;
-    return brushRadius;
+    return brushSize/2;
   }
 
-  void changeIntensity (int relativeValue) {
-    if (relativeValue != 0) {
-      brushIntensity = constrain(brushIntensity + relativeValue, 1, 100);
+  void changeBrushIntensity (float intensity) {
+    brushIntensity += intensity;
+  }
 
-      for (int row = 0; row < brushPixels.length; row++) {
-        for (int col = 0; col < brushPixels[0].length; col++) {
-          brushPixelsWithIntensity[row][col] = round(brushPixels[row][col] * brushIntensity);
-        }
+  void prepareBrush () {
+    float[][] squareBrush = new float[max_brush_size][max_brush_size];
+
+    for (int x = 0; x < max_brush_size; x++) {
+      for (int y = 0; y < max_brush_size; y++) {
+        squareBrush[x][y] = 1.0;
       }
     }
-  }
-
-  void calcBrush (int radius) {
-    int widthHeight = (radius * 2) + 1;
-    brushPixels = new float[widthHeight][widthHeight];
-    brushPixelsWithIntensity = new int[widthHeight][widthHeight];
-
+    
+    brush = squareBrush;
+    /*
     int radiusSquared = radius * radius;
 
     for (int row = 0; row < widthHeight; row++) {
@@ -186,7 +219,7 @@ class MapManager { //<>//
         }
         brushPixelsWithIntensity[row][col] = round(brushPixels[row][col] * brushIntensity / 10);
       }
-    }
+    }*/
   }
 
   void changePoint(int col, int row) {

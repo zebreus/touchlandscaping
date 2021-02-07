@@ -62,7 +62,7 @@ void draw()
   showDebugOutput();
 
   touchManager.update();
-  println(frameRate);
+  //println(frameRate);
 }
 
 
@@ -109,7 +109,7 @@ void showDebugOutput() {
     text( infotext, (5*screen_scale_factor), (10*screen_scale_factor));
     text("Framerate  : " + frameRate, (5*screen_scale_factor), height-(25*screen_scale_factor));
     text("Intensity: " + mapManager.brushIntensity, (5*screen_scale_factor), height-(15*screen_scale_factor));      
-    text("Radius: " + mapManager.brushRadius, (5*screen_scale_factor), height-(5*screen_scale_factor));
+    text("Radius: " + mapManager.brushSize, (5*screen_scale_factor), height-(5*screen_scale_factor));
   }
 }
 void printCursorList(ArrayList<TuioCursor> cursorList, String name) {

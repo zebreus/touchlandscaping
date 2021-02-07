@@ -33,9 +33,7 @@ public class SizeAdjustmentGesture extends Gesture { //<>// //<>// //<>// //<>//
     println(angleChange);
     stroke(#000000);
     fill(color(0, 0, 50, 128));
-    circle(initialPosition.getScreenX(width), initialPosition.getScreenY(height),mapManager.getBrushRadius());
-
-    //updateScrollActions();
+    circle(initialPosition.getScreenX(width), initialPosition.getScreenY(height),mapManager.getBrushSize());
 
     if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED || cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
       return false;
@@ -44,7 +42,7 @@ public class SizeAdjustmentGesture extends Gesture { //<>// //<>// //<>// //<>//
   }
   
   public void adjustSizeByAngle(float angle){
-    mapManager.changeRadius(int(angle*angle_to_size));
+    mapManager.changeBrushSize(int(angle*angle_to_size));
   }
 
   public float evaluatePotential() {
