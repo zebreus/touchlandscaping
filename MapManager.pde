@@ -1,14 +1,15 @@
-class MapManager {
+class MapManager { //<>//
   int[][] terrainHeight;
 
   final color[] heightColors = new color[501];
   final color lineColor = color(0, 0, 0, 40);
   final color transparentColor = color(0, 0, 0, 0);
 
-  int brushRadius = 50;
-  int brushRadiusCache = brushRadius;
-  int brushIntensity = 20;
-  int brushIntensityCache = brushIntensity;
+  // Brush radius in mm
+  //TODO change brush radius actually to mm
+  float brushRadius = 50.0;
+  // Brush intensity multiplier
+  float brushIntensity = 1.0;
 
 
   // Relevant for the legend markings
@@ -40,7 +41,7 @@ class MapManager {
     initTerrainHeight();
     prepareMapShader();
     prepareLegendKeyImage();
-    calcBrush(brushRadius);
+    calcBrush(int(brushRadius));
   }
 
   void drawFullMapToImage() {
@@ -77,8 +78,8 @@ class MapManager {
 
             if (brushPixels[row][col] != 0) {
 
-              int colCorrected = col + toolX - brushRadius;
-              int rowCorrected = row + toolY - brushRadius;
+              int colCorrected = col + toolX - int(brushRadius);
+              int rowCorrected = row + toolY - int(brushRadius);
 
               if (colCorrected > 0 && rowCorrected > 0 && colCorrected < width && rowCorrected < height) {
                 float avg = 0;
@@ -109,8 +110,8 @@ class MapManager {
         for (int row = 0; row < brushPixels.length; row++) {
           for (int col = 0; col < brushPixels[0].length; col++) {
 
-            int colCorrected = col + toolX - brushRadius;
-            int rowCorrected = row + toolY - brushRadius;
+            int colCorrected = col + toolX - int(brushRadius);
+            int rowCorrected = row + toolY - int(brushRadius);
 
             if (colCorrected > 0 && rowCorrected > 0 && colCorrected < width && rowCorrected < height) {
               if (tool == Tool.RAISE_TERRAIN) {
@@ -136,26 +137,28 @@ class MapManager {
     return tool;
   }
 
-  void cacheSizeIntensity() {
-    brushRadiusCache = brushRadius;
-    brushIntensityCache = brushIntensity;
-  }
-
-  void changeRadius (int relativeValue) {
+  void changeRadius (float relativeValue) {
     if (relativeValue != 0) {
-      brushRadius = constrain(brushRadiusCache + relativeValue, 1, 100);
+      brushRadius = constrain(brushRadius + relativeValue, 1, 100);
 
-      calcBrush (brushRadius);
+      calcBrush (int(brushRadius));
     }
+  }
+  
+  //Return the brush radius in mm
+  float getBrushRadius () {
+    //TODO rewrite the brush system
+    //return brushPixels.length/2;
+    return brushRadius;
   }
 
   void changeIntensity (int relativeValue) {
     if (relativeValue != 0) {
-      brushIntensity = constrain(brushIntensityCache + relativeValue, 1, 100);
+      brushIntensity = constrain(brushIntensity + relativeValue, 1, 100);
 
       for (int row = 0; row < brushPixels.length; row++) {
         for (int col = 0; col < brushPixels[0].length; col++) {
-          brushPixelsWithIntensity[row][col] = round(brushPixels[row][col] * brushIntensity / 10);
+          brushPixelsWithIntensity[row][col] = round(brushPixels[row][col] * brushIntensity);
         }
       }
     }
