@@ -61,6 +61,11 @@ void draw()
   touchManager.update();
 }
 
+void keyPressed() {  
+  if (key == 'd') {
+    doDebugOverlay = !doDebugOverlay;
+  }  
+}
 
 void showDebugOutput() {
   String infotext = "";
