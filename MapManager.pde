@@ -5,7 +5,7 @@ class MapManager { //<>// //<>//
   final color lineColor = color(0, 0, 0, 40);
   final color transparentColor = color(0, 0, 0, 0);
   // The maximum height that can be stored in terrainHeight
-  int max_height = (2^16)-1;
+  int max_height = int(pow(2,16))-1;
 
   // Brush radius in mm
   //TODO change brush radius actually to mm
@@ -93,11 +93,11 @@ class MapManager { //<>// //<>//
             if (mapX > 0 && mapY > 0 && mapX < width && mapY < height) {
               switch(tool){
               case RAISE_TERRAIN:
-                terrainHeight.pixels[mapX + (mapY*width)] = constrain(terrainHeight.pixels[mapX + (mapY*width)] + (int(intensity)*raise_factor), 0, max_height);
+                terrainHeight.pixels[mapX + (mapY*width)] = constrain(terrainHeight.pixels[mapX + (mapY*width)] + int(intensity*raise_factor), 0, max_height);
                 break;
                 
               case LOWER_TERRAIN:
-                terrainHeight.pixels[mapX + (mapY*width)] = constrain(terrainHeight.pixels[mapX + (mapY*width)] - (int(intensity)*raise_factor), 0, max_height);
+                terrainHeight.pixels[mapX + (mapY*width)] = constrain(terrainHeight.pixels[mapX + (mapY*width)] - int(intensity*raise_factor), 0, max_height);
                 break;
                 
               case SMOOTH_TERRAIN:
