@@ -4,6 +4,8 @@ class MapManager { //<>// //<>//
   final color[] heightColors = new color[501];
   final color lineColor = color(0, 0, 0, 40);
   final color transparentColor = color(0, 0, 0, 0);
+  // The maximum height that can be stored in terrainHeight
+  int max_height = (2^16)-1;
 
   // Brush radius in mm
   //TODO change brush radius actually to mm
@@ -17,6 +19,9 @@ class MapManager { //<>// //<>//
   int min_brush_size = 10;
   // The initial size of the brush. (mm)
   int initial_brush_size = 40;
+  
+  // A multiplier for the intensity
+  int raise_factor = 64;
 
 
   // Relevant for the legend markings
@@ -74,79 +79,6 @@ class MapManager { //<>// //<>//
     return realValue * brushIntensity;
     
   }
-/*
-  void useTool(TuioPoint toolPosition) {
-    int toolX = round(toolPosition.getX()*width);
-    int toolY = round(toolPosition.getY()*height);
-
-    {
-
-      mapImage.loadPixels();
-      int[][] terrainHeightCopy = null;
-
-      if (tool == Tool.SMOOTH_TERRAIN) {
-
-        terrainHeightCopy = terrainHeight;
-        int smoothingIntensity = max(1, floor(brushIntensity / 10));
-
-        for (int row = 0; row < int(brushSize); row++) {
-          for (int col = 0; col < int(brushSize); col++) {
-            
-            //TODO ask kyrill how this works
-            //TODO adjust for static brush[][]
-            if (brush[row][col] != 0) {
-
-              int colCorrected = col + toolX - int(brushSize);
-              int rowCorrected = row + toolY - int(brushSize);
-
-              if (colCorrected > 0 && rowCorrected > 0 && colCorrected < width && rowCorrected < height) {
-                float avg = 0;
-                float smoothingDivider = 0;
-
-                for (int i = -smoothingIntensity; i <= smoothingIntensity; i++) {
-                  for (int j = -smoothingIntensity; j <= smoothingIntensity; j++) {
-                    int coli = colCorrected + i;
-                    int rowj = rowCorrected + j;
-
-                    if (coli > 0 && rowj > 0 && coli < width && rowj < height) {
-                      float weight = (float(smoothingIntensity - abs(i)) / float(smoothingIntensity * 2)) + (float(smoothingIntensity - abs(j)) / float(smoothingIntensity * 2));
-                      avg += terrainHeight[rowj][coli] * weight;
-                      smoothingDivider += weight;
-                    }
-                  }
-                }
-                avg = avg / smoothingDivider;
-                terrainHeightCopy[rowCorrected][colCorrected] = round(avg);
-              }
-            }
-          }
-        }
-      }
-
-      if (tool == Tool.RAISE_TERRAIN || tool == Tool.LOWER_TERRAIN || tool == Tool.SMOOTH_TERRAIN) {
-
-        for (int x = 0; x < int(brushSize); x++) {
-          for (int y = 0; y < int(brushSize); y++) {
-
-            int colCorrected = x + toolX - int(brushSize/2);
-            int rowCorrected = y + toolY - int(brushSize/2);
-
-            if (colCorrected > 0 && rowCorrected > 0 && colCorrected < width && rowCorrected < height) {
-              if (tool == Tool.RAISE_TERRAIN) {
-                changePoint(colCorrected, rowCorrected, constrain(terrainHeight[rowCorrected][colCorrected] + int(brushAt(x,y)), -500, 1000));
-              } else if (tool == Tool.LOWER_TERRAIN) {
-                changePoint(colCorrected, rowCorrected, constrain(terrainHeight[rowCorrected][colCorrected] - int(brushAt(x,y)), -500, 1000));
-              } else if (tool == Tool.SMOOTH_TERRAIN && terrainHeightCopy != null) {
-                changePoint(colCorrected, rowCorrected, terrainHeightCopy[rowCorrected][colCorrected]);
-              }
-            }
-          }
-        }
-      }
-      mapImage.updatePixels();
-    }
-  }
-*/
 
     void useTool(TuioPoint toolPosition) {
     int toolX = round(toolPosition.getX()*width);
@@ -161,11 +93,11 @@ class MapManager { //<>// //<>//
             if (mapX > 0 && mapY > 0 && mapX < width && mapY < height) {
               switch(tool){
               case RAISE_TERRAIN:
-                terrainHeight.pixels[mapX + (mapY*width)] = constrain(terrainHeight.pixels[mapX + (mapY*width)] + int(intensity), 0, 1023);
+                terrainHeight.pixels[mapX + (mapY*width)] = constrain(terrainHeight.pixels[mapX + (mapY*width)] + (int(intensity)*raise_factor), 0, max_height);
                 break;
                 
               case LOWER_TERRAIN:
-                terrainHeight.pixels[mapX + (mapY*width)] = constrain(terrainHeight.pixels[mapX + (mapY*width)] - int(intensity), 0, 1023);
+                terrainHeight.pixels[mapX + (mapY*width)] = constrain(terrainHeight.pixels[mapX + (mapY*width)] - (int(intensity)*raise_factor), 0, max_height);
                 break;
                 
               case SMOOTH_TERRAIN:
@@ -365,7 +297,8 @@ class MapManager { //<>// //<>//
     
     for(int x = 0; x < width;x++){
       for(int y = 0; y < height;y++){
-        this.terrainHeight.pixels[x+ (y*width) ] = terrainHeight[y][x];
+        // Adjust so terrainHeight is from 0 to max_height (2^16-1)
+        this.terrainHeight.pixels[x+ (y*width) ] = terrainHeight[y][x]*64;
       }
     }
   }

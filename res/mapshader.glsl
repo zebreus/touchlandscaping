@@ -18,7 +18,7 @@ varying vec4 vertTexCoord;
 
 float getHeight(const vec2 position){
     vec4 color = texture(texture, position);
-    return (color.b/4)+(color.g*64);
+    return (color.b/256)+(color.g);
 }
 
 bool isLine() {
