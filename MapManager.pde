@@ -32,10 +32,12 @@ class MapManager { //<>// //<>// //<>//
 
   // Legend dimensions
   int legend_width = 160;
-  int legend_height = 600;
+  int legend_field_height = 15;
   int legend_side_margin = 10;
   int legend_top_margin = 10;
   float legend_text_width = 0.40;
+  int legend_screen_bottom_distance = 20;
+  int legend_screen_side_distance = 30;
 
   float[][] brush;
 
@@ -198,18 +200,19 @@ class MapManager { //<>// //<>// //<>//
   }
 
   void prepareLegendKeyImage() {
-    PGraphics g = createGraphics(legend_width, legend_height);
+    int legendHeight = legend_top_margin*2+(steps+1)*legend_field_height;
+    PGraphics g = createGraphics(legend_width, legendHeight);
     g.beginDraw();
 
     // Some name values
-    int fieldHeight = (legend_height-(legend_top_margin*2))/(steps+1);
+    int fieldHeight = legend_field_height;
     int textWidth = int((legend_width-(legend_side_margin*2))*legend_text_width);
     int fieldWidth = (legend_width-(legend_side_margin*2))-textWidth;
 
     // Draw background
     g.noStroke();
-    g.fill(255);
-    g.rect(0, 0, legend_width, legend_height, 9, 9, 9, 9);
+    g.fill(color(255,255,255, 150));
+    g.rect(0, 0, legend_width, legendHeight, 9, 9, 9, 9);
 
     //Prepare for contents
     g.pushMatrix();
@@ -228,14 +231,13 @@ class MapManager { //<>// //<>// //<>//
     g.pushMatrix();
     g.translate(0, 0);
     for (int step = steps; step >= 0; step--) {
-
       drawLegendMeterMarking(g, step);
       g.translate(0, fieldHeight);
     }
     g.popMatrix();
 
     g.endDraw();
-    legendImage = g.get(0, 0, legend_width, legend_height);
+    legendImage = g.get(0, 0, legend_width, legendHeight);
   }
 
   void initTerrainHeight() {
@@ -257,7 +259,7 @@ class MapManager { //<>// //<>// //<>//
     image(terrainHeight, 0, 0);
     resetShader();
     popMatrix();
-    image(legendImage, 0, 0);
+    image(legendImage, width-legendImage.width-legend_screen_side_distance, height-legendImage.height-legend_screen_bottom_distance);
   }
 
   PImage generateColorTexture(color[] colors, float[] positions) throws Exception {
@@ -329,7 +331,7 @@ class MapManager { //<>// //<>// //<>//
     mapShader = loadShader("mapshader.glsl");
     mapShader.set("steps", steps);
     mapShader.set("shadingIntensity", 2);
-    mapShader.set("lineIntensity", 0.8f);
+    mapShader.set("lineIntensity", 0.7f);
     mapShader.set("colorTexture", colorTexture);
   }
 }
