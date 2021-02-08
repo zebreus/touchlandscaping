@@ -1,26 +1,23 @@
-public class IntensityAdjustmentGesture extends Gesture { //<>//
-  float initialDistance;
+public class IntensityAdjustmentGesture extends Gesture { //<>// //<>// //<>// //<>//
+  // Minimal start distance (mm)
+  static final float minimum_distance = 30;
+  // Maximum start distance (mm)
+  static final float maximum_distance = 200;
+  // Maximum distance change before impossible (mm)
+  static final float distance_change_threshold = 10;
+  // Maximum position change before impossible (mm)
+  static final float position_change_threshold = 10;
+  // Maximum angle change
+  static final float angle_threshold = 10;
+  // How much each degree changes the brush size (percentage)
+  static final float angle_to_intensity = 0.01;
+  
+    float initialDistance;
   TuioPoint initialPosition;
   TuioTime initialTime;
   float initialAngle;
   float lastAngle;
-  
-  // Matching timeout (ms)
-  //TuioTime timeout = new TuioTime(1500);
-  // Minimal start distance (mm)
-  float minimum_distance = 30;
-  // Maximum start distance (mm)
-  float maximum_distance = 200;
-  // Maximum distance change before impossible (mm)
-  float distance_change_threshold = 10;
-  // Maximum position change before impossible (mm)
-  float position_change_threshold = 10;
   boolean initialized = false;
-
-
-  float angle_threshold = 10;
-  // How much each degree changes the brush size (percentage)
-  float angle_to_intensity = 0.01;
 
   public IntensityAdjustmentGesture(ArrayList<TuioCursor> cursors) {
     super(cursors);
@@ -52,7 +49,6 @@ public class IntensityAdjustmentGesture extends Gesture { //<>//
       return Gesture.NO_MATCH;
     }
 
-    // Abort if one cursor is removed
     if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED || cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
       println("removed");
       return Gesture.NO_MATCH;
@@ -93,11 +89,6 @@ public class IntensityAdjustmentGesture extends Gesture { //<>//
       lastAngle = currentAngle;
       return Gesture.MATCH;
     }
-    
-    //if( currentTime.subtract(timeout).getTotalMilliseconds() > initialTime.getTotalMilliseconds()){
-    //  println("timeout");
-    //  return Gesture.NO_MATCH;
-    //}
 
     return Gesture.UNCLEAR;
   }

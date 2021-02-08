@@ -1,4 +1,4 @@
-import de.voidplus.dollar.*; //<>// //<>//
+import de.voidplus.dollar.*; //<>// //<>// //<>// //<>//
 import development.*;
 
 import de.voidplus.dollar.*;
@@ -13,7 +13,7 @@ import java.util.Random;
 
 
 // Settings now in settings.pde
-//Debug cursor width in mm
+// Debug cursor width in mm
 float cursor_size = 10;
 
 OneDollar one;
@@ -27,7 +27,6 @@ Map<String, PImage[]> buttons;
 void settings(){
   System.setProperty("jogl.disable.openglcore", "false");
 
-  //noCursor();
   size(1600, 1000, P2D);
   
 }
@@ -160,7 +159,6 @@ void addTuioCursor(TuioCursor tcur) {
   touchManager.addCursor(tcur);
 }
 
-// called when a cursor is moved
 void updateTuioCursor (TuioCursor tcur) {
   if (verbose) println("set cur "+tcur.getCursorID()+" ("+tcur.getSessionID()+ ") " +tcur.getX()+" "+tcur.getY()
     +" "+tcur.getMotionSpeed()+" "+tcur.getMotionAccel());

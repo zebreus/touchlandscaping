@@ -1,57 +1,42 @@
-class MapManager { //<>// //<>// //<>//
-  PImage terrainHeight;
-
-  final color[] heightColors = new color[501];
-  final color lineColor = color(0, 0, 0, 40);
-  final color transparentColor = color(0, 0, 0, 0);
+class MapManager { //<>// //<>// //<>// //<>//
   // The maximum height that can be stored in terrainHeight
-  int max_height = int(pow(2,16))-1;
-
-  // Brush radius in mm
-  //TODO change brush radius actually to mm
-  float brushSize;
-  // Brush intensity multiplier
-  float brushIntensity = 1.0;
-  
+  static final int max_height = 65535;
   // The maximum size of the brush. (mm)
-  int max_brush_size = 80;
+  static final int max_brush_size = 80;
   // The minimum size of the brush. (mm)
-  int min_brush_size = 10;
+  static final int min_brush_size = 10;
   // The initial size of the brush. (mm)
-  int initial_brush_size = 40;
+  static final int initial_brush_size = 40;
   // The minimum intensity of the brush. (multiplier)
-  float min_brush_intensity = 0.1;
+  static final float min_brush_intensity = 0.1;
   // The maximum intensity of the brush. (multiplier)
-  float max_brush_intensity = 1.0;
-  
+  static final float max_brush_intensity = 1.0;
   // A multiplier for the intensity
-  int raise_factor = 64;
-
-
+  static final int raise_factor = 64;
   // Relevant for the legend markings
   // The height of the lowest possible point in meters
-  int lowest_elevation = -4250;
+  static final int lowest_elevation = -4250;
   // The height of the highest possible point in meters
-  int elevation_range = 8500;
-
+  static final int elevation_range = 8500;
+  // Number of different colors on the map
+  int steps = 34;
   // Legend dimensions
-  int legend_width = 160;
-  int legend_field_height = 15;
-  int legend_side_margin = 10;
-  int legend_top_margin = 10;
-  float legend_text_width = 0.40;
-  int legend_screen_bottom_distance = 20;
-  int legend_screen_side_distance = 30;
+  static final int legend_width = 160;
+  static final int legend_field_height = 15;
+  static final int legend_side_margin = 10;
+  static final int legend_top_margin = 10;
+  static final float legend_text_width = 0.40;
+  static final int legend_screen_bottom_distance = 20;
+  static final int legend_screen_side_distance = 30;
 
   float[][] brush;
-
   Tool tool = Tool.RAISE_TERRAIN;
-
   PShader mapShader;
-
-  int steps = 34;
   PImage colorTexture;
   PImage legendImage;
+  float brushSize;
+  float brushIntensity = 1.0;
+  PImage terrainHeight;
 
   MapManager() {
     initializeMapImage();
@@ -69,12 +54,10 @@ class MapManager { //<>// //<>// //<>//
   // Get the brush value at the given coordinates of the brush.
   // The input values are between 0 and brushSize
   float brushAt(int x, int y){
-    //TODO Maybe do not interpolate, because that is quite slow
     int toolSizeX = brush.length;
     int toolSizeY = brush[0].length;
     float scalingFactorX = float(toolSizeX-1)/brushSize;
     float scalingFactorY = float(toolSizeY-1)/brushSize;
-    //return brush[int(scalingFactorX*x)][int(scalingFactorY*y)] * brushIntensity;
     float positionX = scalingFactorX*x;
     float positionY = scalingFactorY*y;
     int lowerX = constrain(int(positionX),0,toolSizeX-1);
@@ -93,8 +76,8 @@ class MapManager { //<>// //<>// //<>//
         for (int x = 0; x < int(brushSize); x++) {
           for (int y = 0; y < int(brushSize); y++) {
             float intensity = brushAt(x,y);
-            int mapX = x + toolX - int(brushSize/2);
-            int mapY = y + toolY - int(brushSize/2);
+            int mapX = x + toolX - (int)(brushSize/2);
+            int mapY = y + toolY - (int)(brushSize/2);
 
             if (mapX > 0 && mapY > 0 && mapX < width && mapY < height) {
               switch(tool){
@@ -110,7 +93,6 @@ class MapManager { //<>// //<>// //<>//
                 float avg = 0;
                 float smoothingDivider = 0;
                 int smoothingIntensity = 2;
-
                 for (int i = -smoothingIntensity; i <= smoothingIntensity; i++) {
                   for (int j = -smoothingIntensity; j <= smoothingIntensity; j++) {
                     int smoothX = mapX + i;
@@ -128,8 +110,6 @@ class MapManager { //<>// //<>// //<>//
                 break;
                 
               case SPECIAL:
-                //one.draw();      
-                //one.track(toolX, toolY);
                 return;
               
               }
@@ -167,14 +147,6 @@ class MapManager { //<>// //<>// //<>//
   }
 
   void prepareBrush () {
-    int square_brush_size = 10;
-    float[][] squareBrush = new float[square_brush_size][square_brush_size];
-    for (int x = 0; x < square_brush_size; x++) {
-      for (int y = 0; y < square_brush_size; y++) {
-        squareBrush[x][y] = 1.0;
-      }
-    }
-    
     int round_brush_size = 20;
     float[][] roundBrush = new float[round_brush_size][round_brush_size];
     for (int x = 0; x < round_brush_size; x++) {
@@ -194,7 +166,7 @@ class MapManager { //<>// //<>// //<>//
 
   color getStepColor(int step) {
     if (step < 0 || step > steps-1) {
-      return #000000 ;
+      return color(0);
     }
     int pos = int((float(step)/float(steps))*255f);
     return colorTexture.pixels[pos];
@@ -208,13 +180,13 @@ class MapManager { //<>// //<>// //<>//
   }
 
   void drawLegendField(PGraphics g, int step, int width, int height) {
-    g.stroke(#000000);
+    g.stroke(color(0));
     g.fill(getStepColor(step));
     g.rect(0, 0, width, height);
   }
 
   void drawLegendMeterMarking(PGraphics g, int step) {
-    g.fill(#000000);
+    g.fill(color(0));
     g.textAlign(LEFT, CENTER);
     g.text(getStepElevation(step)+"m", 0, 0);
   }

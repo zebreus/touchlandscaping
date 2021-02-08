@@ -2,7 +2,7 @@ import java.util.concurrent.Semaphore;
 
 public class TouchManager {
 
-  float maxInitialGestureDistance = 0.5f;
+  static final float maxInitialGestureDistance = 0.5f;
 
   // When cursors are removed, they are
   // Sets of points, that have no matching gesture and are still mutable
@@ -43,7 +43,6 @@ public class TouchManager {
 
     unrecognizedGestures.add(newCursorList);
 
-    //TODO add gesture for all supported gestures
     uncertainGestures.add(new ToolGesture(newCursorList));
     uncertainGestures.add(new SpecialGesture(newCursorList));
     uncertainGestures.add(new MenuGesture(newCursorList));
@@ -59,8 +58,6 @@ public class TouchManager {
   }
 
   public void update() {
-    //Evaluate gestures
-    //try {
       
       try {
         semaphore.acquire();
@@ -69,10 +66,10 @@ public class TouchManager {
       }
       
       for (Iterator<Gesture> iterator = uncertainGestures.iterator(); iterator.hasNext(); ) {
-      Gesture gesture = iterator.next(); // TODO: ConcurrentModificationException
+      Gesture gesture = iterator.next();
       float certainty = gesture.evaluatePotential();
       if (certainty <= Gesture.NO_MATCH) {
-        iterator.remove(); // TODO: ConcurrentModificationException
+        iterator.remove();
         boolean last = true;
         for (Gesture otherGesture : uncertainGestures) {
           if (otherGesture.getCursors().equals(gesture.getCursors())) {
@@ -85,7 +82,7 @@ public class TouchManager {
         }
       }
       if (certainty >= Gesture.MATCH) {
-        iterator.remove(); // TODO: ConcurrentModificationException
+        iterator.remove();
         activeGestures.add(gesture);
         unrecognizedGestures.remove(gesture.getCursors());
       }
@@ -100,10 +97,5 @@ public class TouchManager {
     }
     
     semaphore.release();
-
-    //} catch (Exception e) {
-    //  println("Something bad happened:");
-    //  println(e);
-    //}
   }
 }

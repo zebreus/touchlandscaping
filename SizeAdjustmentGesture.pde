@@ -1,24 +1,23 @@
 public class SizeAdjustmentGesture extends Gesture { //<>// //<>//
+  // Minimal start distance (mm)
+  static final float minimum_distance = 30;
+  // Maximum start distance (mm)
+  static final float maximum_distance = 200;
+  // Maximum angle change before impossible (degrees)
+  static final float angle_change_threshold = 10;
+  // Maximum position change before impossible (mm)
+  static final float position_change_threshold = 10;
+  // Distance change, after which the gesture is triggered
+  static final float distance_change_threshold = 10;
+  // How much each mm changes the brush size (mm)
+  static final float distance_to_size = 0.25;
+  
   float initialDistance;
   TuioPoint initialPosition;
   TuioTime initialTime;
   float initialAngle;
   float lastDistance;
-  
-  // Minimal start distance (mm)
-  float minimum_distance = 30;
-  // Maximum start distance (mm)
-  float maximum_distance = 200;
-  // Maximum angle change before impossible (degrees)
-  float angle_change_threshold = 10;
-  // Maximum position change before impossible (mm)
-  float position_change_threshold = 10;
   boolean initialized = false;
-
-  // Distance change, after which the gesture is triggered
-  float distance_change_threshold = 10;
-  // How much each mm changes the brush size (mm)
-  float distance_to_size = 0.25;
 
   public SizeAdjustmentGesture(ArrayList<TuioCursor> cursors) {
     super(cursors);
@@ -31,7 +30,7 @@ public class SizeAdjustmentGesture extends Gesture { //<>// //<>//
     lastDistance = currentDistance;
     println(distanceChange);
     adjustSize(distanceChange);
-    stroke(#000000);
+    stroke(color(0));
     fill(color(0, 0, 50, 128));
     circle(currentPosition.getScreenX(width), currentPosition.getScreenY(height),mapManager.getBrushSize()/screen_pixel_width);
 
@@ -51,7 +50,6 @@ public class SizeAdjustmentGesture extends Gesture { //<>// //<>//
       return Gesture.NO_MATCH;
     }
 
-    // Abort if one cursor is removed
     if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED || cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
       println("removed");
       return Gesture.NO_MATCH;
@@ -92,11 +90,6 @@ public class SizeAdjustmentGesture extends Gesture { //<>// //<>//
       lastDistance = currentDistance;
       return Gesture.MATCH;
     }
-    
-    //if( currentTime.subtract(timeout).getTotalMilliseconds() > initialTime.getTotalMilliseconds()){
-    //  println("timeout");
-    //  return Gesture.NO_MATCH;
-    //}
 
     return Gesture.UNCLEAR;
   }

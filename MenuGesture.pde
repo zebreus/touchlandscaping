@@ -1,34 +1,32 @@
-public class MenuGesture extends Gesture { //<>//
+public class MenuGesture extends Gesture { //<>// //<>// //<>//
+  // Minimal start distance (mm)
+  static final float minimum_distance = 30;
+  // Maximum start distance (mm)
+  static final float maximum_distance = 200;
+  // Maximum angle change before impossible (degrees)
+  static final float angle_change_threshold = 10;
+  // Position change, after which the gesture is triggered (mm)
+  static final float position_change_threshold = 10;
+  // Maximum distance change before impossible (mm)
+  static final float distance_change_threshold = 10;
+  // The difference to the initial position for the menu to fully open
+  static final float open_menu_position_difference = 40;
+  // Whether the menu should rotate
+  static final boolean rotate_menu = true;
+  // Whether to move the menu after match
+  static final boolean move_menu = true;
+  // Whether to draw a selection ark
+  static final boolean draw_arc = true;
+  // Menu center deadzone ( in mm )
+  static final float menu_center_deadzone = 15;
+  // Menu outside deadzone ( in mm )
+  static final float menu_border_deadzone = 60;
+
   float initialDistance;
   TuioPoint initialPosition;
   TuioTime initialTime;
   float initialAngle;
   TuioPoint triggerPosition;
-
-  // Minimal start distance (mm)
-  float minimum_distance = 30;
-  // Maximum start distance (mm)
-  float maximum_distance = 200;
-  // Maximum angle change before impossible (degrees)
-  float angle_change_threshold = 10;
-  // Position change, after which the gesture is triggered (mm)
-  float position_change_threshold = 10;
-  // Maximum distance change before impossible (mm)
-  float distance_change_threshold = 10;
-  // The difference to the initial position for the menu to fully open
-  float open_menu_position_difference = 40;
-
-  // Whether the menu should rotate
-  boolean rotate_menu = true;
-  // Whether to move the menu after match
-  boolean move_menu = true;
-  // Whether to draw a selection ark
-  boolean draw_arc = true;
-  // Menu center deadzone ( in mm )
-  float menu_center_deadzone = 15;
-  // Menu outside deadzone ( in mm )
-  float menu_border_deadzone = 60;
-
   boolean initialized = false;
   boolean menuOpened = false;
   float menuAngle;
@@ -85,7 +83,6 @@ public class MenuGesture extends Gesture { //<>//
     drawArc();
 
     rotate(-radians(menuAngle));
-
     drawMenu();
 
     menuAngle += 180;

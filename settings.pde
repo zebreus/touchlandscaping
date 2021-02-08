@@ -1,24 +1,24 @@
 // Touchfield width in mm
-float touchfield_width = 270;
+static final float touchfield_width = 270;
 // Touchfield height (automatic, if same aspect ratio as screen)
-float touchfield_height;
+static float touchfield_height;
 // Screen/Window width in mm
-float screen_width = 440;
+static final float screen_width = 440;
 // Draw debug overlay
-boolean doDebugOverlay = true;
+static final boolean doDebugOverlay = true;
 // Generate verbose output
-boolean verbose = false;
+static final boolean verbose = false;
 
 // Helper variables, will be set in setup
 // A general scaling factor defined width/table_width
-float screen_scale_factor;
+static float screen_scale_factor;
 // Pixel width in mm table_width/width
-float screen_pixel_width;
+static float screen_pixel_width;
 // Screen height
-float screen_height;
+static float screen_height;
 
 // Default font
-PFont font;
+static PFont font;
 
 // Get distance between two Points in mm on touchfield
 float getTouchDistance(TuioPoint a, TuioPoint b){
