@@ -19,9 +19,6 @@ TuioProcessing tuioClient;
 TouchManager touchManager;
 MapManager mapManager;
 
-
-
-
 Map<String, PImage[]> buttons;
 
 void settings(){

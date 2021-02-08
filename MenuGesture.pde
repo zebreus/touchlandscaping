@@ -5,7 +5,7 @@ float minimum_distance = 50;
 // Maximum start distance
 float maximum_distance = 150;
 // The rotation threshold, before this gesture is discarded
-float angle_threshold = 30.0;
+float angle_threshold = 10.0;
 // If the distance decreased more than this, the gesture is detected. (mm)
 float distance_threshold = 10;
 // A bit of travel apart should be allowed
