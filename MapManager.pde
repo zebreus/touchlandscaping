@@ -1,4 +1,4 @@
-class MapManager { //<>//
+class MapManager { //<>// //<>//
   PImage terrainHeight;
 
   final color[] heightColors = new color[501];
@@ -163,10 +163,32 @@ class MapManager { //<>//
               case RAISE_TERRAIN:
                 terrainHeight.pixels[mapX + (mapY*width)] = constrain(terrainHeight.pixels[mapX + (mapY*width)] + int(intensity), 0, 1023);
                 break;
+                
               case LOWER_TERRAIN:
-                terrainHeight.pixels[mapX + (mapY*width)] = constrain(terrainHeight.pixels[mapX + (mapY*width)] + int(intensity), 0, 1023);
+                terrainHeight.pixels[mapX + (mapY*width)] = constrain(terrainHeight.pixels[mapX + (mapY*width)] - int(intensity), 0, 1023);
                 break;
+                
               case SMOOTH_TERRAIN:
+                float avg = 0;
+                float smoothingDivider = 0;
+                int smoothingIntensity = 2;
+
+                for (int i = -smoothingIntensity; i <= smoothingIntensity; i++) {
+                  for (int j = -smoothingIntensity; j <= smoothingIntensity; j++) {
+                    int smoothX = mapX + i;
+                    int smoothY = mapY + j;
+
+                    if (smoothX > 0 && smoothY > 0 && smoothX < width && smoothY < height) {
+                      float weight = (float(smoothingIntensity - abs(i)) / float(smoothingIntensity * 2)) + (float(smoothingIntensity - abs(j)) / float(smoothingIntensity * 2));
+                      avg += terrainHeight.pixels[smoothX + (smoothY*width)] * weight;
+                      smoothingDivider += weight;
+                    }
+                  }
+                }
+                avg = avg / smoothingDivider;
+                terrainHeight.pixels[mapX + (mapY*width)] = round(avg);
+                break;
+                
               case SPECIAL:
                 one.draw();      
                 one.track(toolX, toolY);
@@ -435,7 +457,7 @@ class MapManager { //<>//
     mapShader = loadShader("mapshader.glsl");
     mapShader.set("steps", steps);
     mapShader.set("shadingIntensity", 2);
-    mapShader.set("lineIntensity", 0.2f);
+    mapShader.set("lineIntensity", 0.8f);
     mapShader.set("colorTexture", colorTexture);
   }
 }
