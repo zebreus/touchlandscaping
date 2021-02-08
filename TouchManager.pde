@@ -36,7 +36,7 @@ public class TouchManager {
     uncertainGestures.add(new ToolGesture(newCursorList));
     uncertainGestures.add(new SpecialGesture(newCursorList));
     uncertainGestures.add(new MenuGesture(newCursorList));
-    //uncertainGestures.add(new ScrollGesture(newCursorList));
+    uncertainGestures.add(new IntensityAdjustmentGesture(newCursorList));
     uncertainGestures.add(new SizeAdjustmentGesture(newCursorList));
   }
 

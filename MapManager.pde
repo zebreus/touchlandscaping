@@ -19,6 +19,10 @@ class MapManager { //<>// //<>// //<>//
   int min_brush_size = 10;
   // The initial size of the brush. (mm)
   int initial_brush_size = 40;
+  // The minimum intensity of the brush. (multiplier)
+  float min_brush_intensity = 0.1;
+  // The maximum intensity of the brush. (multiplier)
+  float max_brush_intensity = 1.0;
   
   // A multiplier for the intensity
   int raise_factor = 64;
@@ -155,7 +159,11 @@ class MapManager { //<>// //<>// //<>//
   }
 
   void changeBrushIntensity (float intensity) {
-    brushIntensity += intensity;
+    brushIntensity = constrain(brushIntensity + intensity, min_brush_intensity, max_brush_intensity);
+  }
+  
+  float getBrushIntensity () {
+    return brushIntensity;
   }
 
   void prepareBrush () {
