@@ -3,37 +3,37 @@ public class SizeAdjustmentGesture extends Gesture { //<>//
   TuioPoint initialPosition;
   TuioTime initialTime;
   float initialAngle;
-  float lastAngle;
+  float lastDistance;
   
-  // Matching timeout (ms)
-  //TuioTime timeout = new TuioTime(1500);
   // Minimal start distance (mm)
-  float minimum_distance = 50;
+  float minimum_distance = 30;
   // Maximum start distance (mm)
-  float maximum_distance = 150;
-  // Maximum distance change before impossible (mm)
-  float distance_change_threshold = 10;
+  float maximum_distance = 200;
+  // Maximum angle change before impossible (degrees)
+  float angle_change_threshold = 10;
   // Maximum position change before impossible (mm)
   float position_change_threshold = 10;
   boolean initialized = false;
 
-
-  float angle_threshold = 10;
-  // How much each degree changes the brush size (mm)
-  float angle_to_size = 1;
+  // Distance change, after which the gesture is triggered
+  float distance_change_threshold = 10;
+  // How much each mm changes the brush size (mm)
+  float distance_to_size = 0.25;
 
   public SizeAdjustmentGesture(ArrayList<TuioCursor> cursors) {
     super(cursors);
   }
 
   public boolean update() {
-    float currentAngle = cursors.get(0).getAngleDegrees(cursors.get(1));
-    float angleChange = angleDifference(currentAngle, lastAngle);
-    lastAngle = currentAngle;
-    adjustSizeByAngle(angleChange);
+    TuioPoint currentPosition = getMiddle(cursors.get(0),cursors.get(1));
+    float currentDistance = getTouchDistance(cursors.get(0), cursors.get(1));
+    float distanceChange = currentDistance-lastDistance;
+    lastDistance = currentDistance;
+    println(distanceChange);
+    adjustSize(distanceChange);
     stroke(#000000);
     fill(color(0, 0, 50, 128));
-    circle(initialPosition.getScreenX(width), initialPosition.getScreenY(height),mapManager.getBrushSize()/screen_pixel_width);
+    circle(currentPosition.getScreenX(width), currentPosition.getScreenY(height),mapManager.getBrushSize()/screen_pixel_width);
 
     if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED || cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
       return false;
@@ -41,8 +41,8 @@ public class SizeAdjustmentGesture extends Gesture { //<>//
     return true;
   }
   
-  public void adjustSizeByAngle(float angle){
-    mapManager.changeBrushSize(angle*angle_to_size/screen_pixel_width);
+  public void adjustSize(float distanceChange){
+    mapManager.changeBrushSize(distanceChange*distance_to_size/screen_pixel_width);
   }
 
   public float evaluatePotential() {
@@ -81,15 +81,15 @@ public class SizeAdjustmentGesture extends Gesture { //<>//
       return Gesture.NO_MATCH;
     }
 
-    float distanceChange = abs(currentDistance-initialDistance);
-    if (distanceChange >= distance_change_threshold) {
-      println("distance changed too much");
+    if (abs(angleDifference(initialAngle,currentAngle)) > angle_threshold) {
+      println("angle changed too much");
       return Gesture.NO_MATCH;
     }
-
-    if (abs(angleDifference(initialAngle,currentAngle)) > angle_threshold) {
+    
+    float distanceChange = abs(currentDistance-initialDistance);
+    if (distanceChange >= distance_change_threshold) {
       println("match");
-      lastAngle = currentAngle;
+      lastDistance = currentDistance;
       return Gesture.MATCH;
     }
     
