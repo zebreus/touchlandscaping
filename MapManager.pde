@@ -168,6 +168,10 @@ class MapManager { //<>//
                 break;
               case SMOOTH_TERRAIN:
               case SPECIAL:
+                one.draw();      
+                one.track(toolX, toolY);
+                return;
+              
               }
             }
           }
@@ -281,6 +285,7 @@ class MapManager { //<>//
   }
 
   void initTerrainHeight() {
+    noiseSeed(System.currentTimeMillis());
     int[][] terrainHeight = new int[height][width];
     float noiseStep = 0.008; // FROM max ~0.03 Small detailled 'rocks'
     float noiseStepBaseHeight = 0.003; // TO min ~0.005 Large 'plains'
