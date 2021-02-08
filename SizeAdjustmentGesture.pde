@@ -1,4 +1,4 @@
-public class SizeAdjustmentGesture extends Gesture { //<>// //<>// //<>// //<>// //<>//
+public class SizeAdjustmentGesture extends Gesture { //<>//
   float initialDistance;
   TuioPoint initialPosition;
   TuioTime initialTime;

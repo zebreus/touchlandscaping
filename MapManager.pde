@@ -1,4 +1,4 @@
-class MapManager { //<>// //<>//
+class MapManager { //<>// //<>// //<>//
   PImage terrainHeight;
 
   final color[] heightColors = new color[501];
@@ -122,8 +122,8 @@ class MapManager { //<>// //<>//
                 break;
                 
               case SPECIAL:
-                one.draw();      
-                one.track(toolX, toolY);
+                //one.draw();      
+                //one.track(toolX, toolY);
                 return;
               
               }

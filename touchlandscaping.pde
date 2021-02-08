@@ -1,4 +1,7 @@
-import de.voidplus.dollar.*; //<>//
+import de.voidplus.dollar.*; //<>// //<>//
+import development.*;
+
+import de.voidplus.dollar.*;
 import development.*;
 
 import TUIO.*;
@@ -48,7 +51,7 @@ void setup()
 
   setupOneDollar();
 }
- //<>//
+
 void draw()
 {
   mapManager.drawMap();

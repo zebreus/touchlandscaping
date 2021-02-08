@@ -19,6 +19,10 @@ public class ToolGesture extends Gesture {
   }
 
   public float evaluatePotential() {
+    if (mapManager.getTool() == Tool.SPECIAL) {
+      return Gesture.NO_MATCH;
+    }
+    
     if (cursors.size() != 1) {
       return Gesture.NO_MATCH;
     }
