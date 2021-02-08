@@ -1,4 +1,4 @@
-public class SizeAdjustmentGesture extends Gesture { //<>//
+public class SizeAdjustmentGesture extends Gesture { //<>// //<>//
   float initialDistance;
   TuioPoint initialPosition;
   TuioTime initialTime;
@@ -81,7 +81,7 @@ public class SizeAdjustmentGesture extends Gesture { //<>//
       return Gesture.NO_MATCH;
     }
 
-    if (abs(angleDifference(initialAngle,currentAngle)) > angle_threshold) {
+    if (abs(angleDifference(initialAngle,currentAngle)) > angle_change_threshold) {
       println("angle changed too much");
       return Gesture.NO_MATCH;
     }
