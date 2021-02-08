@@ -1,6 +1,6 @@
 #ifdef GL_ES
-precision mediump float;
-precision mediump int;
+precision highp float;
+precision highp int;
 #endif
 
 #define PROCESSING_TEXTURE_SHADER
@@ -16,14 +16,19 @@ uniform sampler2D colorTexture;
 varying vec4 vertColor;
 varying vec4 vertTexCoord;
 
+float getHeight(const vec2 position){
+    vec4 color = texture(texture, position);
+    return (color.b/4)+(color.g*64);
+}
+
 bool isLine() {
   vec2 tcTop = vertTexCoord.st + vec2(0.0, -texOffset.t);
   vec2 tcLeft = vertTexCoord.st + vec2(-texOffset.s, 0.0);
   vec2 tc = vertTexCoord.st;
   
-  int heightLeft = int(texture(texture, tcLeft).g * steps) ;
-  int heightTop = int(texture(texture, tcTop).g * steps);
-  int height = int(texture(texture, tc).g * steps);
+  int heightLeft = int(getHeight( tcLeft) * steps) ;
+  int heightTop = int(getHeight( tcTop) * steps);
+  int height = int(getHeight( tc) * steps);
   
   return (heightLeft != height || heightTop != height);
 }
@@ -59,27 +64,27 @@ void main(void) {
   vec2 tc1111 = vertTexCoord.st + vec2(         0.0, -texOffset.t*8);
   vec2 tc7777 = vertTexCoord.st + vec2(         0.0, +texOffset.t*8);
   
-  float col0 = texture2D(texture, tc0).g;
-  float col1 = texture2D(texture, tc1).g;
-  float col2 = texture2D(texture, tc2).g;
-  float col3 = texture2D(texture, tc3).g;
-  float col4 = texture2D(texture, tc4).g;
-  float col5 = texture2D(texture, tc5).g;
-  float col6 = texture2D(texture, tc6).g;
-  float col7 = texture2D(texture, tc7).g;
-  float col8 = texture2D(texture, tc8).g;
-  float col33 = texture2D(texture, tc33).g;
-  float col55 = texture2D(texture, tc55).g;
-  float col11 = texture2D(texture, tc11).g;
-  float col77 = texture2D(texture, tc77).g;
-  float col333 = texture2D(texture, tc333).g;
-  float col555 = texture2D(texture, tc555).g;
-  float col111 = texture2D(texture, tc111).g;
-  float col777 = texture2D(texture, tc777).g;
-  float col3333 = texture2D(texture, tc3333).g;
-  float col5555 = texture2D(texture, tc5555).g;
-  float col1111 = texture2D(texture, tc1111).g;
-  float col7777 = texture2D(texture, tc7777).g;
+  float col0 = getHeight(tc0);
+  float col1 = getHeight(tc1);
+  float col2 = getHeight(tc2);
+  float col3 = getHeight(tc3);
+  float col4 = getHeight(tc4);
+  float col5 = getHeight(tc5);
+  float col6 = getHeight(tc6);
+  float col7 = getHeight(tc7);
+  float col8 = getHeight(tc8);
+  float col33 = getHeight(tc33);
+  float col55 = getHeight(tc55);
+  float col11 = getHeight(tc11);
+  float col77 = getHeight(tc77);
+  float col333 = getHeight(tc333);
+  float col555 = getHeight(tc555);
+  float col111 = getHeight(tc111);
+  float col777 = getHeight(tc777);
+  float col3333 = getHeight(tc3333);
+  float col5555 = getHeight(tc5555);
+  float col1111 = getHeight(tc1111);
+  float col7777 = getHeight(tc7777);
   
   // Calculate the shading. This is really hacky, but works quite well.
   float light = (((col7-col1+col5-col3)*1 + (col77-col11+col55-col33)*0.5 + (col777-col111+col555-col333)*0.25 + (col7777-col1111+col5555-col3333)*0.125 )*shadingIntensity) ;
@@ -91,7 +96,7 @@ void main(void) {
   }
   ++light;
   
-  float height = texture2D(texture, vertTexCoord.st).g;
+  float height = getHeight(vertTexCoord.st);
   float pos = float(int(height*steps))/float(steps);
   vec4 color = texture(colorTexture, vec2(pos, 0)) ;
   

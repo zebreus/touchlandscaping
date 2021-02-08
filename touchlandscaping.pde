@@ -19,7 +19,7 @@ TuioProcessing tuioClient;
 TouchManager touchManager;
 MapManager mapManager;
 
-PGraphics mapImage;
+
 
 
 Map<String, PImage[]> buttons;
@@ -35,7 +35,6 @@ void settings(){
 void setup()
 {
   surface.setTitle("Xtreme Touchlandscaping deluxe++");
-  mapImage = createGraphics(width, height, P2D);
 
   fill(0);
 
@@ -49,8 +48,6 @@ void setup()
   mapManager = new MapManager();
 
   loadButtons();
-
-  mapManager.drawFullMapToImage();
 
   setupOneDollar();
 }

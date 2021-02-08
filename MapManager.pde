@@ -1,5 +1,5 @@
 class MapManager { //<>//
-  int[][] terrainHeight;
+  PImage terrainHeight;
 
   final color[] heightColors = new color[501];
   final color lineColor = color(0, 0, 0, 40);
@@ -11,22 +11,22 @@ class MapManager { //<>//
   // Brush intensity multiplier
   float brushIntensity = 1.0;
   
-  // The maximum size the brush can be.
+  // The maximum size the brush can be. (mm)
   int max_brush_size = 500;
 
 
   // Relevant for the legend markings
   // The height of the lowest possible point in meters
-  int lowestElevation = -4250;
+  int lowest_elevation = -4250;
   // The height of the highest possible point in meters
-  int elevationRange = 8500;
+  int elevation_range = 8500;
 
   // Legend dimensions
-  int legendWidth = 160;
-  int legendHeight = 600;
-  int legendSideMargin = 10;
-  int legendTopMargin = 10;
-  float legendTextPart = 0.40;
+  int legend_width = 160;
+  int legend_height = 600;
+  int legend_side_margin = 10;
+  int legend_top_margin = 10;
+  float legend_text_width = 0.40;
 
   float[][] brush;
 
@@ -38,33 +38,37 @@ class MapManager { //<>//
   PImage colorTexture;
   PImage legendImage;
 
-  MapManager() {  
+  MapManager() {
+    initializeMapImage();
     initTerrainHeight();
     prepareMapShader();
     prepareLegendKeyImage();
     prepareBrush();
   }
 
-  void drawFullMapToImage() {
-    // Needed to initialize pixel array
-    mapImage.beginDraw();
-    mapImage.rect(0, 0, width, height);
-    mapImage.endDraw();
-
-    mapImage.loadPixels();
-    for (int row = 0; row < height; row++) {
-      for (int col = 0; col < width; col++) {
-        changePoint(col, row);
-      }
-    }
-    mapImage.updatePixels();
+  void initializeMapImage() {
+    terrainHeight = createImage(width, height, RGB);
+    terrainHeight.loadPixels();
   }
 
   // Get the brush value at the given coordinates of the brush.
   // The input values are between 0 and brushSize
   float brushAt(int x, int y){
-    float scalingFactor = float(max_brush_size)/brushSize;
-    return brush[int(scalingFactor*x)][int(scalingFactor*y)] * brushIntensity;
+    //TODO Maybe do not interpolate, because that is quite slow
+    int toolSizeX = brush.length;
+    int toolSizeY = brush[0].length;
+    float scalingFactorX = float(toolSizeX)/brushSize;
+    float scalingFactorY = float(toolSizeY)/brushSize;
+    //return brush[int(scalingFactorX*x)][int(scalingFactorY*y)] * brushIntensity;
+    float positionX = scalingFactorX*x;
+    float positionY = scalingFactorY*y;
+    int lowerX = constrain(int(positionX),0,toolSizeX-2);
+    int lowerY = constrain(int(positionY),0,toolSizeY-2);
+    float lowerValue = lerp(brush[lowerX][lowerY],brush[lowerX+1][lowerY],positionX-int(positionX));
+    float upperValue = lerp(brush[lowerX][lowerY+1],brush[lowerX+1][lowerY+1],positionX-int(positionX));
+    float realValue = lerp(lowerValue,upperValue,positionY-int(positionY));
+    return realValue * brushIntensity;
+    
   }
 /*
   void useTool(TuioPoint toolPosition) {
@@ -144,20 +148,19 @@ class MapManager { //<>//
     int toolX = round(toolPosition.getX()*width);
     int toolY = round(toolPosition.getY()*height);
 
-
         for (int x = 0; x < int(brushSize); x++) {
           for (int y = 0; y < int(brushSize); y++) {
             float intensity = brushAt(x,y);
-            int colCorrected = x + toolX - int(brushSize/2);
-            int rowCorrected = y + toolY - int(brushSize/2);
+            int mapX = x + toolX - int(brushSize/2);
+            int mapY = y + toolY - int(brushSize/2);
 
-            if (colCorrected > 0 && rowCorrected > 0 && colCorrected < width && rowCorrected < height) {
+            if (mapX > 0 && mapY > 0 && mapX < width && mapY < height) {
               switch(tool){
               case RAISE_TERRAIN:
-                changePoint(colCorrected, rowCorrected, constrain(terrainHeight[rowCorrected][colCorrected] + int(intensity), -500, 1000));
+                terrainHeight.pixels[mapX + (mapY*width)] = constrain(terrainHeight.pixels[mapX + (mapY*width)] + int(intensity), 0, 1023);
                 break;
               case LOWER_TERRAIN:
-                changePoint(colCorrected, rowCorrected, constrain(terrainHeight[rowCorrected][colCorrected] - int(intensity), -500, 1000));
+                terrainHeight.pixels[mapX + (mapY*width)] = constrain(terrainHeight.pixels[mapX + (mapY*width)] + int(intensity), 0, 1023);
                 break;
               case SMOOTH_TERRAIN:
               case SPECIAL:
@@ -165,7 +168,6 @@ class MapManager { //<>//
             }
           }
         }
-      mapImage.updatePixels();
   }
 
   void setTool(Tool newTool) {
@@ -176,15 +178,16 @@ class MapManager { //<>//
     return tool;
   }
 
+  //Adjust brush size in mm
   void changeBrushSize (float size) {
-    brushSize = constrain(brushSize + size, 10, max_brush_size);
+    float minSizePixels = min_brush_size/screen_pixel_width;
+    float maxSizePixels = max_brush_size/screen_pixel_width;
+    brushSize = constrain(brushSize + (size/screen_pixel_width), minSizePixels, maxSizePixels);
   }
   
-  //Return the brush radius in mm
+  //Return the brush diameter in mm
   float getBrushSize () {
-    //TODO rewrite the brush system
-    //return brushPixels.length/2;
-    return brushSize/2;
+    return brushSize*screen_pixel_width;
   }
 
   void changeBrushIntensity (float intensity) {
@@ -192,43 +195,15 @@ class MapManager { //<>//
   }
 
   void prepareBrush () {
-    float[][] squareBrush = new float[max_brush_size][max_brush_size];
-
-    for (int x = 0; x < max_brush_size; x++) {
-      for (int y = 0; y < max_brush_size; y++) {
+    int square_brush_size = 10;
+    float[][] squareBrush = new float[square_brush_size][square_brush_size];
+    for (int x = 0; x < square_brush_size; x++) {
+      for (int y = 0; y < square_brush_size; y++) {
         squareBrush[x][y] = 1.0;
       }
     }
     
     brush = squareBrush;
-    /*
-    int radiusSquared = radius * radius;
-
-    for (int row = 0; row < widthHeight; row++) {
-      for (int col = 0; col < widthHeight; col++) {
-
-        int colCorrected = col - radius;
-        int rowCorrected = row - radius;
-
-        float distanceSquared = (rowCorrected) * (rowCorrected) + (colCorrected) * (colCorrected);
-
-        if (distanceSquared <= radiusSquared) {
-          brushPixels[row][col] = 1 - (distanceSquared / radiusSquared);
-        } else {
-          brushPixels[row][col] = 0;
-        }
-        brushPixelsWithIntensity[row][col] = round(brushPixels[row][col] * brushIntensity / 10);
-      }
-    }*/
-  }
-
-  void changePoint(int col, int row) {
-    changePoint(col, row, terrainHeight[row][col]);
-  }
-
-  void changePoint(int col, int row, int newValue) {
-    terrainHeight[row][col] = newValue;
-    mapImage.pixels[row * mapImage.width + col] = color(newValue/4);
   }
 
   color getStepColor(int step) {
@@ -243,7 +218,7 @@ class MapManager { //<>//
     if (step < 0 || step > steps) {
       return 0 ;
     }
-    return lowestElevation+int(step*(float(elevationRange)/steps));
+    return lowest_elevation+int(step*(float(elevation_range)/steps));
   }
 
   void drawLegendField(PGraphics g, int step, int width, int height) {
@@ -259,22 +234,22 @@ class MapManager { //<>//
   }
 
   void prepareLegendKeyImage() {
-    PGraphics g = createGraphics(legendWidth, legendHeight);
+    PGraphics g = createGraphics(legend_width, legend_height);
     g.beginDraw();
 
     // Some name values
-    int fieldHeight = (legendHeight-(legendTopMargin*2))/(steps+1);
-    int textWidth = int((legendWidth-(legendSideMargin*2))*legendTextPart);
-    int fieldWidth = (legendWidth-(legendSideMargin*2))-textWidth;
+    int fieldHeight = (legend_height-(legend_top_margin*2))/(steps+1);
+    int textWidth = int((legend_width-(legend_side_margin*2))*legend_text_width);
+    int fieldWidth = (legend_width-(legend_side_margin*2))-textWidth;
 
     // Draw background
     g.noStroke();
     g.fill(255);
-    g.rect(0, 0, legendWidth, legendHeight, 9, 9, 9, 9);
+    g.rect(0, 0, legend_width, legend_height, 9, 9, 9, 9);
 
     //Prepare for contents
     g.pushMatrix();
-    g.translate(legendSideMargin, legendTopMargin+(fieldHeight/2));
+    g.translate(legend_side_margin, legend_top_margin+(fieldHeight/2));
 
     // Draw colored fields
     g.pushMatrix();
@@ -296,11 +271,11 @@ class MapManager { //<>//
     g.popMatrix();
 
     g.endDraw();
-    legendImage = g.get(0, 0, legendWidth, legendHeight);
+    legendImage = g.get(0, 0, legend_width, legend_height);
   }
 
   void initTerrainHeight() {
-    terrainHeight = new int[height][width];
+    int[][] terrainHeight = new int[height][width];
     float noiseStep = 0.008; // FROM max ~0.03 Small detailled 'rocks'
     float noiseStepBaseHeight = 0.003; // TO min ~0.005 Large 'plains'
 
@@ -354,20 +329,27 @@ class MapManager { //<>//
         }
       }
     }
+    
+    for(int x = 0; x < width;x++){
+      for(int y = 0; y < height;y++){
+        this.terrainHeight.pixels[x+ (y*width) ] = terrainHeight[y][x];
+      }
+    }
   }
 
   void drawMap() {
     // For some reason only updated points get redrawn and shaded, this can probably be optimized by a lot
     //TODO optimize
-    for (int h = 0; h < height; h++) {
+    /*for (int h = 0; h < height; h++) {
       for (int w = 0; w < width; w++) {
         changePoint(w, h);
       }
-    }
+    }*/
 
+    terrainHeight.updatePixels();
     pushMatrix();
     shader(mapShader);
-    image(mapImage, 0, 0);
+    image(terrainHeight, 0, 0);
     resetShader();
     popMatrix();
     image(legendImage, 0, 0);
