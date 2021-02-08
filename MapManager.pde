@@ -240,78 +240,17 @@ class MapManager { //<>// //<>// //<>//
 
   void initTerrainHeight() {
     noiseSeed(System.currentTimeMillis());
-    int[][] terrainHeight = new int[height][width];
     float noiseStep = 0.008; // FROM max ~0.03 Small detailled 'rocks'
-    float noiseStepBaseHeight = 0.003; // TO min ~0.005 Large 'plains'
 
     for (int row = 0; row < height; row++) {
       for (int col = 0; col < width; col++) {
-        int noiseBaseHeight = round(noise(noiseStepBaseHeight * col, noiseStepBaseHeight * row) * 200);
-        terrainHeight[row][col] = round(noise(noiseStep * col, noiseStep * row) * 1100) - 250 - noiseBaseHeight;
-      }
-    }
-
-    // TODO: Combine this smoothing step with the brush code, they are too similar!
-    for (int row = 1; row < height; row++) {
-      for (int col = 1; col < width; col++) {
-        float avg = 0;
-        float smoothingDivider = 0;
-        int smoothingIntensityFull = 2;
-
-        for (int i = -smoothingIntensityFull; i <= smoothingIntensityFull; i++) {
-          for (int j = -smoothingIntensityFull; j <= smoothingIntensityFull; j++) {
-            int coli = col + i;
-            int rowj = row + j;
-
-            if (coli > 0 && rowj > 0 && coli < width && rowj < height) {
-              float weight = (float(smoothingIntensityFull - abs(i)) / float(smoothingIntensityFull * 2)) + (float(smoothingIntensityFull - abs(j)) / float(smoothingIntensityFull * 2));
-              avg += terrainHeight[rowj][coli] * weight;
-              smoothingDivider += weight;
-            }
-          }
-        }
-        avg = avg / smoothingDivider;
-        terrainHeight[row][col] = round(avg);
-      }
-    }
-
-    // Clean values
-    int min = 99999;
-    for (int row = 0; row < height; row++) {
-      for (int col = 0; col < width; col++) {
-        if (terrainHeight[row][col]<min) {
-          min = terrainHeight[row][col];
-        }
-      }
-    }
-    //Remove negative values and cap at 1023
-    //TODO It would probably be a really good idea to store the height as a float between 0 and 1
-    for (int row = 0; row < height; row++) {
-      for (int col = 0; col < width; col++) {
-        terrainHeight[row][col] -= min;
-        if (terrainHeight[row][col] > 1023) {
-          terrainHeight[row][col] = 1023;
-        }
-      }
-    }
-    
-    for(int x = 0; x < width;x++){
-      for(int y = 0; y < height;y++){
-        // Adjust so terrainHeight is from 0 to max_height (2^16-1)
-        this.terrainHeight.pixels[x+ (y*width) ] = terrainHeight[y][x]*64;
+        int noiseFeatureHeight = round(noise(noiseStep * col, noiseStep * row) * max_height);
+        terrainHeight.pixels[col + (row*width)] = noiseFeatureHeight;
       }
     }
   }
 
   void drawMap() {
-    // For some reason only updated points get redrawn and shaded, this can probably be optimized by a lot
-    //TODO optimize
-    /*for (int h = 0; h < height; h++) {
-      for (int w = 0; w < width; w++) {
-        changePoint(w, h);
-      }
-    }*/
-
     terrainHeight.updatePixels();
     pushMatrix();
     shader(mapShader);

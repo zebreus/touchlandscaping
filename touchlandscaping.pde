@@ -59,9 +59,7 @@ void draw()
   showDebugOutput();
 
   touchManager.update();
-  //println(frameRate);
 }
-
 
 
 void showDebugOutput() {
