@@ -72,13 +72,13 @@ class MapManager { //<>// //<>// //<>//
     //TODO Maybe do not interpolate, because that is quite slow
     int toolSizeX = brush.length;
     int toolSizeY = brush[0].length;
-    float scalingFactorX = float(toolSizeX)/brushSize;
-    float scalingFactorY = float(toolSizeY)/brushSize;
+    float scalingFactorX = float(toolSizeX-1)/brushSize;
+    float scalingFactorY = float(toolSizeY-1)/brushSize;
     //return brush[int(scalingFactorX*x)][int(scalingFactorY*y)] * brushIntensity;
     float positionX = scalingFactorX*x;
     float positionY = scalingFactorY*y;
-    int lowerX = constrain(int(positionX),0,toolSizeX-2);
-    int lowerY = constrain(int(positionY),0,toolSizeY-2);
+    int lowerX = constrain(int(positionX),0,toolSizeX-1);
+    int lowerY = constrain(int(positionY),0,toolSizeY-1);
     float lowerValue = lerp(brush[lowerX][lowerY],brush[lowerX+1][lowerY],positionX-int(positionX));
     float upperValue = lerp(brush[lowerX][lowerY+1],brush[lowerX+1][lowerY+1],positionX-int(positionX));
     float realValue = lerp(lowerValue,upperValue,positionY-int(positionY));
@@ -175,7 +175,19 @@ class MapManager { //<>// //<>// //<>//
       }
     }
     
-    brush = squareBrush;
+    int round_brush_size = 20;
+    float[][] roundBrush = new float[round_brush_size][round_brush_size];
+    for (int x = 0; x < round_brush_size; x++) {
+      for (int y = 0; y < round_brush_size; y++) {
+        float adjustedX = (x*2/float(round_brush_size-1))-1;
+        float adjustedY = (y*2/float(round_brush_size-1))-1;
+        float value = -(adjustedX*adjustedX)-(adjustedY*adjustedY)+1;
+        roundBrush[x][y] = constrain(value,0,1.0);
+        
+      }
+    }
+    
+    brush = roundBrush;
     
     brushSize = initial_brush_size/screen_pixel_width;
   }
