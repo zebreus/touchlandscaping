@@ -1,7 +1,6 @@
 import java.util.concurrent.Semaphore;
 
 public class TouchManager {
-
   static final float maxInitialGestureDistance = 0.5f;
 
   // When cursors are removed, they are
@@ -14,23 +13,22 @@ public class TouchManager {
   private Semaphore semaphore = new Semaphore(1);
 
   public void addCursor(TuioCursor cursor) {
-    
     try {
       semaphore.acquire();
     } catch (InterruptedException ie) {
       print(ie.toString());
-    }  
-        
+    }
+
     ArrayList<TuioCursor> newCursorList = new ArrayList<TuioCursor>();
     newCursorList.add(cursor);
 
-    for (Iterator<ArrayList<TuioCursor>> cursorListIterator = unrecognizedGestures.iterator(); cursorListIterator.hasNext(); ) {
+    for (Iterator<ArrayList<TuioCursor>> cursorListIterator = unrecognizedGestures.iterator(); cursorListIterator.hasNext();) {
       ArrayList<TuioCursor> cursorList = cursorListIterator.next();
       for (TuioCursor oldCursor : cursorList) {
         if (oldCursor.getDistance(cursor) <= maxInitialGestureDistance) {
           cursorListIterator.remove();
           newCursorList.addAll(cursorList);
-          for (Iterator<Gesture> iterator = uncertainGestures.iterator(); iterator.hasNext(); ) {
+          for (Iterator<Gesture> iterator = uncertainGestures.iterator(); iterator.hasNext();) {
             Gesture gesture = iterator.next();
             if (cursorList.equals(gesture.getCursors())) {
               iterator.remove();
@@ -48,24 +46,21 @@ public class TouchManager {
     uncertainGestures.add(new MenuGesture(newCursorList));
     uncertainGestures.add(new IntensityAdjustmentGesture(newCursorList));
     uncertainGestures.add(new SizeAdjustmentGesture(newCursorList));
-    
+
     semaphore.release();
   }
 
-  public void updateCursor(TuioCursor cursor) {
-  }
-  public void removeCursor(TuioCursor cursor) {
-  }
+  public void updateCursor(TuioCursor cursor) {}
+  public void removeCursor(TuioCursor cursor) {}
 
   public void update() {
-      
-      try {
-        semaphore.acquire();
-      } catch (InterruptedException ie) {
-        print(ie.toString());
-      }
-      
-      for (Iterator<Gesture> iterator = uncertainGestures.iterator(); iterator.hasNext(); ) {
+    try {
+      semaphore.acquire();
+    } catch (InterruptedException ie) {
+      print(ie.toString());
+    }
+
+    for (Iterator<Gesture> iterator = uncertainGestures.iterator(); iterator.hasNext();) {
       Gesture gesture = iterator.next();
       float certainty = gesture.evaluatePotential();
       if (certainty <= Gesture.NO_MATCH) {
@@ -88,14 +83,14 @@ public class TouchManager {
       }
     }
 
-    for (Iterator<Gesture> iterator = activeGestures.iterator(); iterator.hasNext(); ) {
+    for (Iterator<Gesture> iterator = activeGestures.iterator(); iterator.hasNext();) {
       Gesture gesture = iterator.next();
       boolean stillActive = gesture.update();
-      if ( !stillActive ) {
+      if (!stillActive) {
         iterator.remove();
       }
     }
-    
+
     semaphore.release();
   }
 }

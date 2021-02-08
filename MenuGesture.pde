@@ -1,4 +1,4 @@
-public class MenuGesture extends Gesture { //<>// //<>// //<>//
+public class MenuGesture extends Gesture {
   // Minimal start distance (mm)
   static final float minimum_distance = 30;
   // Maximum start distance (mm)
@@ -55,21 +55,20 @@ public class MenuGesture extends Gesture { //<>// //<>// //<>//
       menuCursor = cursors.get(1);
     }
 
-    if ( !menuOpened ) {
+    if (!menuOpened) {
       if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED || cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
         return false;
       }
       float currentAngle = cursors.get(0).getAngleDegrees(cursors.get(1));
       float currentDistance = getTouchDistance(initialPosition, menuCursor);
-      if (move_menu || menuPosition == null){
+      if (move_menu || menuPosition == null) {
         menuPosition = menuCursor;
-
       }
-      
+
       if (rotate_menu) {
         menuAngle = currentAngle;
       }
-      menuScale = (currentDistance/open_menu_position_difference);
+      menuScale = (currentDistance / open_menu_position_difference);
 
       if (currentDistance >= open_menu_position_difference) {
         menuOpened = true;
@@ -128,14 +127,14 @@ public class MenuGesture extends Gesture { //<>// //<>// //<>//
       return Gesture.NO_MATCH;
     }
 
-    float distanceChange = abs(currentDistance-initialDistance);
+    float distanceChange = abs(currentDistance - initialDistance);
     if (distanceChange >= distance_change_threshold) {
       println("distance changed too much");
       return Gesture.NO_MATCH;
     }
 
-    float positionChange =  getTouchDistance(initialPosition, currentPosition);
-    if ( positionChange > position_change_threshold ) {
+    float positionChange = getTouchDistance(initialPosition, currentPosition);
+    if (positionChange > position_change_threshold) {
       println("match");
       return Gesture.MATCH;
     }
@@ -145,20 +144,20 @@ public class MenuGesture extends Gesture { //<>// //<>// //<>//
 
   // Calculate the angle difference. the result is between -180 and +180
   float angleDifference(float angleA, float angleB) {
-    float angleChange = (((angleA-angleB)%360)+360)%360;
-    if ( angleChange > 180 ) {
-      angleChange = -360+angleChange;
+    float angleChange = (((angleA - angleB) % 360) + 360) % 360;
+    if (angleChange > 180) {
+      angleChange = -360 + angleChange;
     }
     return angleChange;
   }
 
   public void drawArc() {
-    float menuDirection = -(menuPosition.getAngleDegrees(menuCursor) - 360)%360;
+    float menuDirection = -(menuPosition.getAngleDegrees(menuCursor) - 360) % 360;
     float menuDistance = getTouchDistance(menuCursor, menuPosition);
     float half_width = 20;
 
-    int arc_size = (int)(menu_border_deadzone*(width/touchfield_width)*2);
-    int inner_arc_size = (int)(menu_center_deadzone*(width/touchfield_width)*2);
+    int arc_size = (int) (menu_border_deadzone * (width / touchfield_width) * 2);
+    int inner_arc_size = (int) (menu_center_deadzone * (width / touchfield_width) * 2);
 
     if (menuDistance > menu_center_deadzone && menuDistance < menu_border_deadzone) {
       fill(color(0, 0, 50, 128));
@@ -166,13 +165,12 @@ public class MenuGesture extends Gesture { //<>// //<>// //<>//
       fill(color(0, 0, 50, 80));
     }
 
-    arc(0, 0, arc_size, arc_size, radians(menuDirection-half_width), radians(menuDirection+half_width));
-    arc(0, 0, inner_arc_size, inner_arc_size, radians(menuDirection+half_width), radians(menuDirection-half_width+360));
+    arc(0, 0, arc_size, arc_size, radians(menuDirection - half_width), radians(menuDirection + half_width));
+    arc(0, 0, inner_arc_size, inner_arc_size, radians(menuDirection + half_width), radians(menuDirection - half_width + 360));
   }
 
-
   public void drawMenu() {
-    float menuDirection = (menuPosition.getAngleDegrees(menuCursor) - menuAngle + 360)%360;
+    float menuDirection = (menuPosition.getAngleDegrees(menuCursor) - menuAngle + 360) % 360;
     float menuDistance = getTouchDistance(menuCursor, menuPosition);
 
     if (menuDistance > menu_center_deadzone && menuDistance < menu_border_deadzone) {
@@ -190,9 +188,9 @@ public class MenuGesture extends Gesture { //<>// //<>// //<>//
     }
 
     Tool setTool = mapManager.getTool();
-    int raiseButtonState =   (selectedTool == Tool.RAISE_TERRAIN) ? 1 : (setTool == Tool.RAISE_TERRAIN) ? 2 : 0;
-    int lowerButtonState =   (selectedTool == Tool.LOWER_TERRAIN) ? 1 : (setTool == Tool.LOWER_TERRAIN) ? 2 : 0;
-    int smoothButtonState =  (selectedTool == Tool.SMOOTH_TERRAIN) ? 1 : (setTool == Tool.SMOOTH_TERRAIN) ? 2 : 0;
+    int raiseButtonState = (selectedTool == Tool.RAISE_TERRAIN) ? 1 : (setTool == Tool.RAISE_TERRAIN) ? 2 : 0;
+    int lowerButtonState = (selectedTool == Tool.LOWER_TERRAIN) ? 1 : (setTool == Tool.LOWER_TERRAIN) ? 2 : 0;
+    int smoothButtonState = (selectedTool == Tool.SMOOTH_TERRAIN) ? 1 : (setTool == Tool.SMOOTH_TERRAIN) ? 2 : 0;
     int specialButtonState = (selectedTool == Tool.SPECIAL) ? 1 : (setTool == Tool.SPECIAL) ? 2 : 0;
 
     image(buttons.get("Raise")[raiseButtonState], -250, -125);
