@@ -7,12 +7,16 @@ class MapManager { //<>//
 
   // Brush radius in mm
   //TODO change brush radius actually to mm
-  float brushSize = 50.0;
+  float brushSize;
   // Brush intensity multiplier
   float brushIntensity = 1.0;
   
-  // The maximum size the brush can be. (mm)
-  int max_brush_size = 500;
+  // The maximum size of the brush. (mm)
+  int max_brush_size = 80;
+  // The minimum size of the brush. (mm)
+  int min_brush_size = 10;
+  // The initial size of the brush. (mm)
+  int initial_brush_size = 40;
 
 
   // Relevant for the legend markings
@@ -204,6 +208,8 @@ class MapManager { //<>//
     }
     
     brush = squareBrush;
+    
+    brushSize = initial_brush_size/screen_pixel_width;
   }
 
   color getStepColor(int step) {

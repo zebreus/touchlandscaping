@@ -11,9 +11,9 @@ public class SizeAdjustmentGesture extends Gesture { //<>// //<>// //<>// //<>//
   float minimum_distance = 50;
   // Maximum start distance (mm)
   float maximum_distance = 150;
-  // Maximum distance change before impossible (%)
-  float distance_change_threshold = 0.2;
   // Maximum distance change before impossible (mm)
+  float distance_change_threshold = 10;
+  // Maximum position change before impossible (mm)
   float position_change_threshold = 10;
   boolean initialized = false;
 
@@ -81,8 +81,8 @@ public class SizeAdjustmentGesture extends Gesture { //<>// //<>// //<>// //<>//
       return Gesture.NO_MATCH;
     }
 
-    float distanceChange = abs(currentDistance)-abs(initialDistance);
-    if (distanceChange >= (initialDistance*distance_change_threshold)) {
+    float distanceChange = abs(currentDistance-initialDistance);
+    if (distanceChange >= distance_change_threshold) {
       println("distance changed too much");
       return Gesture.NO_MATCH;
     }
