@@ -1,3 +1,5 @@
+import java.util.concurrent.Semaphore;
+
 public class TouchManager {
 
   float maxInitialGestureDistance = 0.5f;
@@ -9,7 +11,16 @@ public class TouchManager {
   public ArrayList<Gesture> uncertainGestures = new ArrayList<Gesture>();
   public ArrayList<Gesture> activeGestures = new ArrayList<Gesture>();
 
+  private Semaphore semaphore = new Semaphore(1);
+
   public void addCursor(TuioCursor cursor) {
+    
+    try {
+      semaphore.acquire();
+    } catch (InterruptedException ie) {
+      print(ie.toString());
+    }  
+        
     ArrayList<TuioCursor> newCursorList = new ArrayList<TuioCursor>();
     newCursorList.add(cursor);
 
@@ -38,6 +49,8 @@ public class TouchManager {
     uncertainGestures.add(new MenuGesture(newCursorList));
     //uncertainGestures.add(new ScrollGesture(newCursorList));
     uncertainGestures.add(new SizeAdjustmentGesture(newCursorList));
+    
+    semaphore.release();
   }
 
   public void updateCursor(TuioCursor cursor) {
@@ -47,7 +60,15 @@ public class TouchManager {
 
   public void update() {
     //Evaluate gestures
-    for (Iterator<Gesture> iterator = uncertainGestures.iterator(); iterator.hasNext(); ) {
+    //try {
+      
+      try {
+        semaphore.acquire();
+      } catch (InterruptedException ie) {
+        print(ie.toString());
+      }
+      
+      for (Iterator<Gesture> iterator = uncertainGestures.iterator(); iterator.hasNext(); ) {
       Gesture gesture = iterator.next(); // TODO: ConcurrentModificationException
       float certainty = gesture.evaluatePotential();
       if (certainty <= Gesture.NO_MATCH) {
@@ -64,7 +85,7 @@ public class TouchManager {
         }
       }
       if (certainty >= Gesture.MATCH) {
-        iterator.remove();
+        iterator.remove(); // TODO: ConcurrentModificationException
         activeGestures.add(gesture);
         unrecognizedGestures.remove(gesture.getCursors());
       }
@@ -77,5 +98,12 @@ public class TouchManager {
         iterator.remove();
       }
     }
+    
+    semaphore.release();
+
+    //} catch (Exception e) {
+    //  println("Something bad happened:");
+    //  println(e);
+    //}
   }
 }
