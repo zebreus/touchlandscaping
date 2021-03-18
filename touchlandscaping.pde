@@ -48,6 +48,8 @@ void setup() {
 }
 
 void draw() {
+  updateSettings();
+  
   mapManager.drawMap();
 
   showDebugOutput();
@@ -111,14 +113,14 @@ void mouseWheel(MouseEvent event) {
 
 void keyPressed() {
   if (key == 'd') {
-    doDebugOverlay = !doDebugOverlay;
+    drawDebugOverlay = !drawDebugOverlay;
   }
 }
 
 void showDebugOutput() {
   String infotext = "";
 
-  if (doDebugOverlay) {
+  if (drawDebugOverlay) {
     ArrayList<Gesture> tempUncertainGestures = (ArrayList<Gesture>) touchManager.uncertainGestures.clone();
     ArrayList<Gesture> tempActiveGestures = (ArrayList<Gesture>) touchManager.activeGestures.clone();
     ArrayList<ArrayList<TuioCursor>> tempUnrecognizedGestures = (ArrayList<ArrayList<TuioCursor>>) touchManager.unrecognizedGestures.clone();

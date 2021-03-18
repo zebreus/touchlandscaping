@@ -1,13 +1,13 @@
 // Touchfield width in mm
 static final float touchfield_width = 270;
-// Touchfield height (automatic, if same aspect ratio as screen)
+// Touchfield height in mm (automatic, if same aspect ratio as screen)
 static float touchfield_height;
-// Screen/Window width in mm
-static final float screen_width = 440;
+// Screen pixel density
+static final float screen_ppi = 100;
 // Draw debug overlay
-static boolean doDebugOverlay = false;
-// Generate verbose output
-static final boolean verbose = false;
+static boolean drawDebugOverlay = false;
+// Print debug messages
+static final boolean printDebugMessages = false;
 // Enable mouse controls
 static final boolean mouseControl = true;
 
@@ -16,8 +16,11 @@ static final boolean mouseControl = true;
 static float screen_scale_factor;
 // Pixel width in mm table_width/width
 static float screen_pixel_width;
-// Screen height
+// Screen/Window width in mm
+static float screen_width;
+// Screen height in mm
 static float screen_height;
+
 
 // Default font
 static PFont font;
@@ -44,13 +47,18 @@ TuioPoint getMiddle(TuioPoint a, TuioPoint b) {
 
 // Called after setup is completed
 void setupSettings() {
-  screen_scale_factor = width / screen_width;
-  screen_pixel_width = screen_width / width;
-  screen_height = height * screen_pixel_width;
+  updateSettings();
   if (touchfield_height == 0.0) {
     touchfield_height = touchfield_width * ((float) height / (float) width);
   }
-  font = createFont("Arial", 12);
+  font = createFont("SansSerif", 12);
+}
+
+void updateSettings() {
+  screen_width = width*25.4/screen_ppi;
+  screen_height = height*25.4/screen_ppi;
+  screen_scale_factor = width / screen_width;
+  screen_pixel_width = screen_width / width;
 }
 
 // Loads button images to easily access when menue is called
@@ -83,7 +91,7 @@ void loadButtons() {
 }
 
 <T> void debugPrint(T message){
-  if(verbose){
+  if(printDebugMessages){
     println(message);
   }
 }
