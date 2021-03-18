@@ -6,6 +6,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Arrays;
+import java.util.ArrayList;
 
 // Settings now in settings.pde
 // Debug cursor width in mm
@@ -50,15 +52,35 @@ void draw() {
   showDebugOutput();
 
   touchManager.update();
+  
+  if(mouseMenu != null){
+    boolean menuActive = mouseMenu.update();
+    if(!menuActive){
+      mouseMenu = null;
+    }
+  }
 }
 
 
 TuioCursor mouseCursor;
+MenuGesture mouseMenu;
 
 void mousePressed(){
   if(mouseControl){
     mouseCursor = new TuioCursor(TuioTime.getSessionTime(), 0,0,float(mouseX)/width,float(mouseY)/height);
-    addTuioCursor(mouseCursor);
+    if(mouseButton == LEFT){
+      addTuioCursor(mouseCursor);
+    }else if(mouseButton == RIGHT){
+      ArrayList<TuioCursor> cursors = new ArrayList<TuioCursor>();
+      cursors.add(mouseCursor);
+      cursors.add(mouseCursor);
+      
+      mouseMenu = new MenuGesture(cursors);
+      mouseMenu.initialPosition = new TuioCursor(mouseCursor);
+      mouseMenu.menuPosition = new TuioCursor(mouseCursor);
+      mouseMenu.menuOpened = true;
+      mouseMenu.menuScale = 1;
+    }
   }
 }
 
