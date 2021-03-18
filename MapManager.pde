@@ -320,7 +320,7 @@ class MapManager {
       return;
     }
 
-    mapShader = loadShader("mapshader.glsl");
+    mapShader = loadShader("res/mapshader.glsl");
     mapShader.set("steps", steps);
     mapShader.set("shadingIntensity", 2);
     mapShader.set("lineIntensity", 0.7f);

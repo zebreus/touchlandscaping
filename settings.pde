@@ -66,27 +66,27 @@ void loadButtons() {
   buttons = new HashMap<String, PImage[]>();
 
   PImage[] buttonArray = new PImage[3];
-  buttonArray[0] = loadImage("Buttons_Raise_1.png");
-  buttonArray[1] = loadImage("Buttons_Raise_2.png");
-  buttonArray[2] = loadImage("Buttons_Raise_3.png");
+  buttonArray[0] = loadImage("res/Buttons_Raise_1.png");
+  buttonArray[1] = loadImage("res/Buttons_Raise_2.png");
+  buttonArray[2] = loadImage("res/Buttons_Raise_3.png");
   buttons.put("Raise", buttonArray);
 
   buttonArray = new PImage[3];
-  buttonArray[0] = loadImage("Buttons_Lower_1.png");
-  buttonArray[1] = loadImage("Buttons_Lower_2.png");
-  buttonArray[2] = loadImage("Buttons_Lower_3.png");
+  buttonArray[0] = loadImage("res/Buttons_Lower_1.png");
+  buttonArray[1] = loadImage("res/Buttons_Lower_2.png");
+  buttonArray[2] = loadImage("res/Buttons_Lower_3.png");
   buttons.put("Lower", buttonArray);
 
   buttonArray = new PImage[3];
-  buttonArray[0] = loadImage("Buttons_Smooth_1.png");
-  buttonArray[1] = loadImage("Buttons_Smooth_2.png");
-  buttonArray[2] = loadImage("Buttons_Smooth_3.png");
+  buttonArray[0] = loadImage("res/Buttons_Smooth_1.png");
+  buttonArray[1] = loadImage("res/Buttons_Smooth_2.png");
+  buttonArray[2] = loadImage("res/Buttons_Smooth_3.png");
   buttons.put("Smooth", buttonArray);
 
   buttonArray = new PImage[3];
-  buttonArray[0] = loadImage("Buttons_Special_1.png");
-  buttonArray[1] = loadImage("Buttons_Special_2.png");
-  buttonArray[2] = loadImage("Buttons_Special_3.png");
+  buttonArray[0] = loadImage("res/Buttons_Special_1.png");
+  buttonArray[1] = loadImage("res/Buttons_Special_2.png");
+  buttonArray[2] = loadImage("res/Buttons_Special_3.png");
   buttons.put("Special", buttonArray);
 }
 
