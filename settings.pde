@@ -8,6 +8,8 @@ static final float screen_width = 440;
 static boolean doDebugOverlay = true;
 // Generate verbose output
 static final boolean verbose = false;
+// Enable mouse controls
+static final boolean mouseControl = true;
 
 // Helper variables, will be set in setup
 // A general scaling factor defined width/table_width

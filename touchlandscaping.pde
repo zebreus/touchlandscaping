@@ -52,6 +52,33 @@ void draw() {
   touchManager.update();
 }
 
+
+TuioCursor mouseCursor;
+
+void mousePressed(){
+  if(mouseControl){
+    mouseCursor = new TuioCursor(TuioTime.getSessionTime(), 0,0,float(mouseX)/width,float(mouseY)/height);
+    addTuioCursor(mouseCursor);
+  }
+}
+
+void mouseDragged(){
+  if(mouseControl){
+    if(mouseCursor != null){
+      mouseCursor.update(TuioTime.getSessionTime(), float(mouseX)/width,float(mouseY)/height);
+    }
+  }
+}
+
+void mouseReleased(){
+  if(mouseControl){
+    if(mouseCursor != null){
+      mouseCursor.remove(TuioTime.getSessionTime());
+      removeTuioCursor(mouseCursor);
+    }
+  }
+}
+
 void keyPressed() {
   if (key == 'd') {
     doDebugOverlay = !doDebugOverlay;
