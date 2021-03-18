@@ -16,7 +16,7 @@ public class TouchManager {
     try {
       semaphore.acquire();
     } catch (InterruptedException ie) {
-      print(ie.toString());
+      debugPrint(ie.toString());
     }
 
     ArrayList<TuioCursor> newCursorList = new ArrayList<TuioCursor>();
@@ -57,7 +57,7 @@ public class TouchManager {
     try {
       semaphore.acquire();
     } catch (InterruptedException ie) {
-      print(ie.toString());
+      debugPrint(ie.toString());
     }
 
     for (Iterator<Gesture> iterator = uncertainGestures.iterator(); iterator.hasNext();) {

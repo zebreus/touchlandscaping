@@ -5,7 +5,7 @@ static float touchfield_height;
 // Screen/Window width in mm
 static final float screen_width = 440;
 // Draw debug overlay
-static boolean doDebugOverlay = true;
+static boolean doDebugOverlay = false;
 // Generate verbose output
 static final boolean verbose = false;
 // Enable mouse controls
@@ -80,4 +80,10 @@ void loadButtons() {
   buttonArray[1] = loadImage("Buttons_Special_2.png");
   buttonArray[2] = loadImage("Buttons_Special_3.png");
   buttons.put("Special", buttonArray);
+}
+
+<T> void debugPrint(T message){
+  if(verbose){
+    println(message);
+  }
 }

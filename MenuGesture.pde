@@ -96,12 +96,12 @@ public class MenuGesture extends Gesture {
 
   public float evaluatePotential() {
     if (cursors.size() != 2) {
-      println("wrong size");
+      debugPrint("wrong size");
       return Gesture.NO_MATCH;
     }
 
     if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED || cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
-      println("removed");
+      debugPrint("removed");
       return Gesture.NO_MATCH;
     }
 
@@ -117,25 +117,25 @@ public class MenuGesture extends Gesture {
       initialTime = currentTime;
       initialized = true;
       if (initialDistance < minimum_distance || initialDistance > maximum_distance) {
-        println("initialDistance");
+        debugPrint("initialDistance");
         return Gesture.NO_MATCH;
       }
     }
 
     if (abs(angleDifference(initialAngle, currentAngle)) > angle_change_threshold) {
-      println("angle changed too much");
+      debugPrint("angle changed too much");
       return Gesture.NO_MATCH;
     }
 
     float distanceChange = abs(currentDistance - initialDistance);
     if (distanceChange >= distance_change_threshold) {
-      println("distance changed too much");
+      debugPrint("distance changed too much");
       return Gesture.NO_MATCH;
     }
 
     float positionChange = getTouchDistance(initialPosition, currentPosition);
     if (positionChange > position_change_threshold) {
-      println("match");
+      debugPrint("match");
       return Gesture.MATCH;
     }
 

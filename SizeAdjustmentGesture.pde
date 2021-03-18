@@ -28,7 +28,7 @@ public class SizeAdjustmentGesture extends Gesture {
     float currentDistance = getTouchDistance(cursors.get(0), cursors.get(1));
     float distanceChange = currentDistance - lastDistance;
     lastDistance = currentDistance;
-    println(distanceChange);
+    debugPrint(distanceChange);
     adjustSize(distanceChange);
     stroke(color(0));
     fill(color(0, 0, 50, 128));
@@ -46,12 +46,12 @@ public class SizeAdjustmentGesture extends Gesture {
 
   public float evaluatePotential() {
     if (cursors.size() != 2) {
-      println("wrong size");
+      debugPrint("wrong size");
       return Gesture.NO_MATCH;
     }
 
     if (cursors.get(0).getTuioState() == TuioCursor.TUIO_REMOVED || cursors.get(1).getTuioState() == TuioCursor.TUIO_REMOVED) {
-      println("removed");
+      debugPrint("removed");
       return Gesture.NO_MATCH;
     }
 
@@ -64,29 +64,29 @@ public class SizeAdjustmentGesture extends Gesture {
       initialDistance = currentDistance;
       initialAngle = currentAngle;
       initialPosition = currentPosition;
-      println(initialPosition.getX());
+      debugPrint(initialPosition.getX());
       initialTime = currentTime;
       initialized = true;
       if (initialDistance < minimum_distance || initialDistance > maximum_distance) {
-        println("initialDistance");
+        debugPrint("initialDistance");
         return Gesture.NO_MATCH;
       }
     }
 
     float positionChange = getTouchDistance(initialPosition, currentPosition);
     if (positionChange > position_change_threshold) {
-      println("position changed too much");
+      debugPrint("position changed too much");
       return Gesture.NO_MATCH;
     }
 
     if (abs(angleDifference(initialAngle, currentAngle)) > angle_change_threshold) {
-      println("angle changed too much");
+      debugPrint("angle changed too much");
       return Gesture.NO_MATCH;
     }
 
     float distanceChange = abs(currentDistance - initialDistance);
     if (distanceChange >= distance_change_threshold) {
-      println("match");
+      debugPrint("match");
       lastDistance = currentDistance;
       return Gesture.MATCH;
     }

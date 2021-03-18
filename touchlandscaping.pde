@@ -202,50 +202,40 @@ void printCursor(TuioCursor cursor, String name, color col, int number) {
 }
 
 void addTuioCursor(TuioCursor tcur) {
-  if (verbose)
-    println("add cur " + tcur.getCursorID() + " (" + tcur.getSessionID() + ") " + tcur.getX() + " " + tcur.getY());
+  debugPrint("add cur " + tcur.getCursorID() + " (" + tcur.getSessionID() + ") " + tcur.getX() + " " + tcur.getY());
   touchManager.addCursor(tcur);
 }
 
 void updateTuioCursor(TuioCursor tcur) {
-  if (verbose)
-    println("set cur " + tcur.getCursorID() + " (" + tcur.getSessionID() + ") " + tcur.getX() + " " + tcur.getY() + " " + tcur.getMotionSpeed() + " " + tcur.getMotionAccel());
+  debugPrint("set cur " + tcur.getCursorID() + " (" + tcur.getSessionID() + ") " + tcur.getX() + " " + tcur.getY() + " " + tcur.getMotionSpeed() + " " + tcur.getMotionAccel());
   touchManager.updateCursor(tcur);
 }
 
 void removeTuioCursor(TuioCursor tcur) {
-  if (verbose)
-    println("del cur " + tcur.getCursorID() + " (" + tcur.getSessionID() + ")");
+  debugPrint("del cur " + tcur.getCursorID() + " (" + tcur.getSessionID() + ")");
   touchManager.removeCursor(tcur);
 }
 
 // Unused dummy functions.
 void addTuioBlob(TuioBlob tblb) {
-  if (verbose)
-    println("add blb " + tblb.getBlobID() + " (" + tblb.getSessionID() + ") " + tblb.getX() + " " + tblb.getY() + " " + tblb.getAngle() + " " + tblb.getWidth() + " " + tblb.getHeight() + " " + tblb.getArea());
+  debugPrint("add blb " + tblb.getBlobID() + " (" + tblb.getSessionID() + ") " + tblb.getX() + " " + tblb.getY() + " " + tblb.getAngle() + " " + tblb.getWidth() + " " + tblb.getHeight() + " " + tblb.getArea());
 }
 void updateTuioBlob(TuioBlob tblb) {
-  if (verbose)
-    println("set blb " + tblb.getBlobID() + " (" + tblb.getSessionID() + ") " + tblb.getX() + " " + tblb.getY() + " " + tblb.getAngle() + " " + tblb.getWidth() + " " + tblb.getHeight() + " " + tblb.getArea() + " " + tblb.getMotionSpeed() + " " + tblb.getRotationSpeed() + " " + tblb.getMotionAccel()
+  debugPrint("set blb " + tblb.getBlobID() + " (" + tblb.getSessionID() + ") " + tblb.getX() + " " + tblb.getY() + " " + tblb.getAngle() + " " + tblb.getWidth() + " " + tblb.getHeight() + " " + tblb.getArea() + " " + tblb.getMotionSpeed() + " " + tblb.getRotationSpeed() + " " + tblb.getMotionAccel()
         + " " + tblb.getRotationAccel());
 }
 void removeTuioBlob(TuioBlob tblb) {
-  if (verbose)
-    println("del blb " + tblb.getBlobID() + " (" + tblb.getSessionID() + ")");
+  debugPrint("del blb " + tblb.getBlobID() + " (" + tblb.getSessionID() + ")");
 }
 void addTuioObject(TuioObject tobj) {
-  if (verbose)
-    println("add obj " + tobj.getSymbolID() + " (" + tobj.getSessionID() + ") " + tobj.getX() + " " + tobj.getY() + " " + tobj.getAngle());
+  debugPrint("add obj " + tobj.getSymbolID() + " (" + tobj.getSessionID() + ") " + tobj.getX() + " " + tobj.getY() + " " + tobj.getAngle());
 }
 void updateTuioObject(TuioObject tobj) {
-  if (verbose)
-    println("set obj " + tobj.getSymbolID() + " (" + tobj.getSessionID() + ") " + tobj.getX() + " " + tobj.getY() + " " + tobj.getAngle() + " " + tobj.getMotionSpeed() + " " + tobj.getRotationSpeed() + " " + tobj.getMotionAccel() + " " + tobj.getRotationAccel());
+  debugPrint("set obj " + tobj.getSymbolID() + " (" + tobj.getSessionID() + ") " + tobj.getX() + " " + tobj.getY() + " " + tobj.getAngle() + " " + tobj.getMotionSpeed() + " " + tobj.getRotationSpeed() + " " + tobj.getMotionAccel() + " " + tobj.getRotationAccel());
 }
 void removeTuioObject(TuioObject tobj) {
-  if (verbose)
-    println("del obj " + tobj.getSymbolID() + " (" + tobj.getSessionID() + ")");
+  debugPrint("del obj " + tobj.getSymbolID() + " (" + tobj.getSessionID() + ")");
 }
 void refresh(TuioTime frameTime) {
-  if (verbose)
-    println("frame #" + frameTime.getFrameID() + " (" + frameTime.getTotalMilliseconds() + ")");
+  debugPrint("frame #" + frameTime.getFrameID() + " (" + frameTime.getTotalMilliseconds() + ")");
 }
