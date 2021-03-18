@@ -242,6 +242,10 @@ class MapManager {
   }
 
   void drawMap() {
+    if(terrainHeight.width != width || terrainHeight.height != height){
+      initializeMapImage();
+      initTerrainHeight();
+    }
     terrainHeight.updatePixels();
     pushMatrix();
     shader(mapShader);
