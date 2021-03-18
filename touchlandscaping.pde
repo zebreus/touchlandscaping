@@ -101,6 +101,13 @@ void mouseReleased(){
   }
 }
 
+void mouseWheel(MouseEvent event) {
+  if(mouseControl){
+    final int sizeMultiplier = 5;
+    mapManager.changeBrushSize(event.getCount() * sizeMultiplier);
+  }
+}
+
 void keyPressed() {
   if (key == 'd') {
     doDebugOverlay = !doDebugOverlay;
