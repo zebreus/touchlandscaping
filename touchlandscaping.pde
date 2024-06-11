@@ -28,7 +28,7 @@ void settings() {
 }
 
 void setup() {
-  frame.setResizable(true);
+  // frame.setResizable(true);
   surface.setTitle("Xtreme Touchlandscaping deluxe++");
 
   fill(0);
